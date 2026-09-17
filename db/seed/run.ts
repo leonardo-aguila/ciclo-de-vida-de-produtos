@@ -21,6 +21,7 @@ import {
 } from "../../src/lib/defaults";
 import * as schema from "../schema";
 import { ENUM_SEEDS } from "./enums";
+import { seedPackages } from "./packages";
 
 config({ path: ".env.local" });
 
@@ -128,6 +129,9 @@ async function main() {
   } else {
     console.log("usuários já existem — preservados (use RESET_USERS=1 para recriar).");
   }
+
+  console.log("gravando pacotes padrão de tarefas...");
+  await seedPackages(db);
 
   // Products, tasks, finance and the rest of the demo data arrive with the
   // phases that build those features; this keeps the seed honest about what
