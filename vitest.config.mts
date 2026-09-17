@@ -30,6 +30,7 @@ export default defineConfig({
           // would have them truncating each other's rows.
           fileParallelism: false,
           setupFiles: ["tests/integration/setup.ts"],
+          globalSetup: ["tests/integration/global-setup.ts"],
           testTimeout: 20_000,
         },
       },

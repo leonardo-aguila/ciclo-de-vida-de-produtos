@@ -5,6 +5,7 @@ import {
   Boxes,
   LogOut,
   Settings,
+  UserCircle,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -70,7 +71,13 @@ export function Nav({
       </ul>
 
       <div className="mt-2 border-t border-border pt-3">
-        <p className="truncate px-2.5 text-xs font-medium text-fg">{userName}</p>
+        <Link
+          href="/conta"
+          className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-fg hover:bg-surface-muted"
+        >
+          <UserCircle className="h-4 w-4 shrink-0 text-fg-muted" />
+          <span className="truncate">{userName}</span>
+        </Link>
         <form action="/api/sair" method="post">
           <button
             type="submit"
