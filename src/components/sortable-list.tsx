@@ -65,6 +65,9 @@ export function SortableList<T extends { id: string }>({
 
   return (
     <DndContext
+      // Stable id: dnd-kit's aria ids would otherwise differ between the
+      // server render and the client one.
+      id="sortable-list"
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
