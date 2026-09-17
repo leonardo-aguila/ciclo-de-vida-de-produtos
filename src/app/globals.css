@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: 247 248 250;
+    --surface: 255 255 255;
+    --surface-muted: 243 244 246;
+    --border: 226 230 235;
+    --fg: 17 24 39;
+    --fg-muted: 100 110 125;
+    --brand: 29 78 216;
+    --brand-fg: 255 255 255;
+    --green: 5 150 105;
+    --amber: 202 138 4;
+    --red: 220 38 38;
+    --blue: 37 99 235;
+    --violet: 124 58 237;
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  * {
+    border-color: rgb(var(--border));
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    background-color: rgb(var(--bg));
+    color: rgb(var(--fg));
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Visible focus everywhere: keyboard navigation is a requirement, not a bonus. */
+  :focus-visible {
+    outline: 2px solid rgb(var(--brand));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  th {
+    text-align: left;
+    font-weight: 600;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-border bg-surface shadow-sm;
+  }
+
+  .card-header {
+    @apply flex items-start justify-between gap-3 border-b border-border px-4 py-3;
+  }
+
+  .card-title {
+    @apply text-sm font-semibold text-fg;
+  }
+
+  .card-body {
+    @apply p-4;
+  }
+
+  .label {
+    @apply mb-1 block text-xs font-medium text-fg-muted;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-fg
+      placeholder:text-fg-muted/70 disabled:cursor-not-allowed disabled:bg-surface-muted;
+  }
+
+  .field-error {
+    @apply mt-1 text-xs text-red;
+  }
+
+  .table {
+    @apply w-full border-collapse text-sm;
+  }
+
+  .table th {
+    @apply border-b border-border px-3 py-2 text-xs font-semibold uppercase tracking-wide text-fg-muted;
+  }
+
+  .table td {
+    @apply border-b border-border/70 px-3 py-2 align-middle;
+  }
+
+  .table tbody tr:hover {
+    @apply bg-surface-muted/60;
+  }
+
+  /* Numbers line up on the decimal separator when they are tabular. */
+  .num {
+    @apply text-right tabular-nums;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+  }
+
+  .card {
+    break-inside: avoid;
+    box-shadow: none;
+  }
+}
