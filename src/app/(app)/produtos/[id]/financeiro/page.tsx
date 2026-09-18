@@ -8,6 +8,7 @@ import {
   listFinanceEntries,
   listMonthlySales,
 } from "@/lib/queries/finance";
+import { getPlannedRevenueByCompetence } from "@/lib/queries/business-plan";
 import { getPrimaryGoal, getProduct } from "@/lib/queries/products";
 import { getSettings } from "@/lib/queries/settings";
 import { FinanceClient } from "./finance-client";
@@ -29,14 +30,16 @@ export default async function FinancePage({ params }: { params: Promise<{ id: st
   const product = await getProduct(id);
   if (!product) notFound();
 
-  const [entries, sales, auditRows, entryTypes, goal, settings] = await Promise.all([
-    listFinanceEntries(id),
-    listMonthlySales(id),
-    listAuditTrail(id),
-    listEnumValues("finance_entry_type"),
-    getPrimaryGoal(id),
-    getSettings(),
-  ]);
+  const [entries, sales, auditRows, entryTypes, goal, settings, plannedByCompetence] =
+    await Promise.all([
+      listFinanceEntries(id),
+      listMonthlySales(id),
+      listAuditTrail(id),
+      listEnumValues("finance_entry_type"),
+      getPrimaryGoal(id),
+      getSettings(),
+      getPlannedRevenueByCompetence(id),
+    ]);
 
   const series = buildMonthlySeries(
     sales.map((sale) => ({
@@ -74,7 +77,7 @@ export default async function FinancePage({ params }: { params: Promise<{ id: st
       series={series}
       payback={payback(series, settings.projectionSettings.windowMonths)}
       monthlyGoal={goalIsMonetary ? monthlyTarget(goal) : null}
-      plannedByCompetence={{}}
+      plannedByCompetence={plannedByCompetence}
       auditRows={auditRows}
       currency={settings.defaultCurrency}
       canWrite={canWriteFinance(user, product)}

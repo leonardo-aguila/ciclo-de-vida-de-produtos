@@ -1,5 +1,8 @@
+import { AlertTriangle } from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/states";
 import { requireUser } from "@/lib/auth/guard";
@@ -43,8 +46,61 @@ export default async function OverviewPage({ params }: { params: Promise<{ id: s
 
   const columnLabels = Object.fromEntries(columns.map((column) => [column.code, column.label]));
 
+  const alerts: { text: string; tone: "red" | "amber" }[] = [];
+  if (metrics.plan.trigger.triggered) {
+    alerts.push({ text: metrics.plan.trigger.message, tone: "red" });
+  }
+  if (metrics.risk.overdueActionPlans > 0) {
+    alerts.push({
+      text: `${metrics.risk.overdueActionPlans} ${
+        metrics.risk.overdueActionPlans === 1
+          ? "plano de ação vencido e não concluído"
+          : "planos de ação vencidos e não concluídos"
+      }, penalizando o Health Score.`,
+      tone: "red",
+    });
+  }
+  if (metrics.plan.milestones.late > 0) {
+    alerts.push({
+      text: `${metrics.plan.milestones.late} ${
+        metrics.plan.milestones.late === 1 ? "marco atrasado" : "marcos atrasados"
+      } no Business Plan.`,
+      tone: "amber",
+    });
+  }
+  if (metrics.tasks.late > 0) {
+    alerts.push({
+      text: `${metrics.tasks.late} ${
+        metrics.tasks.late === 1 ? "tarefa atrasada" : "tarefas atrasadas"
+      } no cronograma.`,
+      tone: "amber",
+    });
+  }
+
   return (
     <div className="space-y-4">
+      {alerts.length > 0 ? (
+        <div className="rounded-xl border border-amber/40 bg-amber/5 px-4 py-3">
+          <p className="flex items-center gap-1.5 text-sm font-medium text-amber">
+            <AlertTriangle className="h-4 w-4" />
+            {alerts.length === 1 ? "1 alerta" : `${alerts.length} alertas`}
+          </p>
+          <ul className="mt-1.5 space-y-1">
+            {alerts.map((alert) => (
+              <li
+                key={alert.text}
+                className={`text-xs ${alert.tone === "red" ? "text-red" : "text-fg-muted"}`}
+              >
+                · {alert.text}
+              </li>
+            ))}
+          </ul>
+          <Button asChild variant="secondary" size="sm" className="mt-2">
+            <Link href={`/produtos/${product.id}/business-plan`}>Ver Business Plan</Link>
+          </Button>
+        </div>
+      ) : null}
+
       {/* Bloco A — indicadores da fase atual. */}
       <Card>
         <CardHeader

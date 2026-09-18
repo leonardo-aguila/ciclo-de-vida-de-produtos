@@ -66,8 +66,12 @@ export const updateUserSchema = z.object({
 export const resetPasswordSchema = z.object({
   id: z.string().uuid(),
   newPassword: passwordSchema,
-  /** Forces the user to pick their own password on the next sign-in. */
-  mustChange: z.coerce.boolean().default(true),
+  /**
+   * Forces the user to pick their own password on the next sign-in.
+   * Defaults to false for the same reason as every other checkbox: an
+   * unchecked box sends nothing, and the schema must not overrule that.
+   */
+  mustChange: z.coerce.boolean().default(false),
 });
 
 export const toggleUserSchema = z.object({

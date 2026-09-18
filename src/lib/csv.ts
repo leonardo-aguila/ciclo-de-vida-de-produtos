@@ -195,3 +195,92 @@ export function downloadCsv(filename: string, content: string): void {
   link.click();
   URL.revokeObjectURL(url);
 }
+
+export type PlanCsvRow = {
+  competence: string;
+  plannedRevenue: number;
+  plannedCost: number;
+  plannedCustomers: number;
+  plannedMargin: number;
+};
+
+const PLAN_FIELDS: Record<keyof PlanCsvRow, string[]> = {
+  competence: ["competencia", "mes", "mes_ano", "periodo", "competence"],
+  plannedRevenue: ["receita_planejada", "receita", "planned_revenue"],
+  plannedCost: ["custo_planejado", "custo", "planned_cost"],
+  plannedCustomers: ["clientes_planejados", "clientes", "planned_customers"],
+  plannedMargin: ["margem_planejada", "margem", "planned_margin"],
+};
+
+export const PLAN_CSV_TEMPLATE = [
+  "competencia;receita_planejada;custo_planejado;clientes_planejados;margem_planejada",
+  "01/2026;50000,00;30000,00;100;20000,00",
+  "02/2026;58000,00;31000,00;110;27000,00",
+].join("\n");
+
+/**
+ * Business plan projections from a spreadsheet. Margin is derived when the
+ * file does not bring it — a plan where margin disagrees with revenue minus
+ * cost is a plan nobody can reconcile.
+ */
+export function parsePlanCsv(text: string): CsvParseResult<PlanCsvRow> {
+  const parsed = Papa.parse<Record<string, string>>(text.trim(), {
+    header: true,
+    skipEmptyLines: "greedy",
+    delimiter: "",
+    transformHeader: normalizeHeader,
+  });
+
+  const errors: CsvRowError[] = [];
+  const rows: PlanCsvRow[] = [];
+
+  const pick = (row: Record<string, string>, field: keyof PlanCsvRow): string => {
+    for (const alias of PLAN_FIELDS[field]) {
+      const value = row[alias];
+      if (value !== undefined && value !== "") return value;
+    }
+    return "";
+  };
+
+  parsed.data.forEach((row, index) => {
+    const line = index + 2;
+    const competence = parseCompetence(pick(row, "competence"));
+    if (!competence) {
+      errors.push({
+        line,
+        message: `Competência ausente ou inválida ("${pick(row, "competence")}"). Use 03/2026 ou 2026-03.`,
+      });
+      return;
+    }
+
+    const plannedRevenue = parseDecimalInput(pick(row, "plannedRevenue")) ?? 0;
+    const plannedCost = parseDecimalInput(pick(row, "plannedCost")) ?? 0;
+    const declaredMargin = parseDecimalInput(pick(row, "plannedMargin"));
+
+    rows.push({
+      competence,
+      plannedRevenue,
+      plannedCost,
+      plannedCustomers: Math.round(parseDecimalInput(pick(row, "plannedCustomers")) ?? 0),
+      plannedMargin: declaredMargin ?? plannedRevenue - plannedCost,
+    });
+  });
+
+  const seen = new Map<string, number>();
+  const deduped: PlanCsvRow[] = [];
+  rows.forEach((row, index) => {
+    const previous = seen.get(row.competence);
+    if (previous !== undefined) {
+      errors.push({
+        line: index + 2,
+        message: `Competência ${row.competence.slice(0, 7)} repetida no arquivo; a última linha prevalece.`,
+      });
+      deduped[previous] = row;
+      return;
+    }
+    seen.set(row.competence, deduped.length);
+    deduped.push(row);
+  });
+
+  return { rows: deduped, errors, headers: parsed.meta.fields ?? [] };
+}
