@@ -117,6 +117,15 @@ export function executionComponent(
     return { raw: null, detail: "Nenhuma tarefa cadastrada." };
   }
 
+  // A schedule that has not started yet cannot be judged: scoring it 100 would
+  // hand the product a full mark for having done nothing.
+  if (expectedProgress <= 0 && actualProgress <= 0) {
+    return {
+      raw: null,
+      detail: "O cronograma ainda não começou — nada a avaliar por enquanto.",
+    };
+  }
+
   const ratio = expectedProgress <= 0 ? 1 : actualProgress / expectedProgress;
   const base = clamp(ratio * 100);
   const penalty = Math.min(30, lateTasks * 5);

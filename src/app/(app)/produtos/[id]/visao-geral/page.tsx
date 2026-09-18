@@ -3,93 +3,111 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/states";
 import { requireUser } from "@/lib/auth/guard";
-import { daysBetween, formatCurrency, formatDate, formatDays, formatNumber, todayIso } from "@/lib/format";
+import { canRegisterDecision } from "@/lib/auth/policy";
+import { formatCurrency, formatDate, formatDays, formatNumber, formatPercent } from "@/lib/format";
 import { GOAL_PERIOD_LABELS, PHASE_LABELS } from "@/lib/labels";
-import { getPhaseHistory, getProduct, getProductGoals } from "@/lib/queries/products";
+import { listEnumValues } from "@/lib/queries/enums";
+import { getProductMetrics } from "@/lib/queries/metrics";
+import { getPortfolioPhaseAverages, listProductDecisions } from "@/lib/queries/portfolio";
+import { getProduct } from "@/lib/queries/products";
+import { getSettings } from "@/lib/queries/settings";
+import { getHealthDelta } from "@/lib/snapshots";
+import { ContinuityCard } from "./continuity-card";
+import { EvolutionCard } from "./evolution-card";
+import { HealthCard } from "./health-card";
+import { IndicatorTile, phaseIndicators } from "./indicators";
 
 export const dynamic = "force-dynamic";
 
 export default async function OverviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await requireUser();
+  const user = await requireUser();
 
   const product = await getProduct(id);
   if (!product) notFound();
 
-  const [goals, history] = await Promise.all([getProductGoals(id), getPhaseHistory(id)]);
-  const today = todayIso();
+  const [metrics, settings, decisions, phaseAverages, columns] = await Promise.all([
+    getProductMetrics(id),
+    getSettings(),
+    listProductDecisions(id),
+    getPortfolioPhaseAverages(),
+    listEnumValues("kanban_column"),
+  ]);
+
+  const healthDelta = await getHealthDelta(id, metrics.health.score);
+
+  const indicators = phaseIndicators(metrics, product.phase, {
+    plannedLaunchDate: product.plannedLaunchDate,
+    actualLaunchDate: product.actualLaunchDate,
+  });
+
+  const columnLabels = Object.fromEntries(columns.map((column) => [column.code, column.label]));
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader title="Metas" description="A principal alimenta o painel executivo." />
-          <CardBody>
-            {goals.length === 0 ? (
-              <EmptyState
-                title="Nenhuma meta cadastrada"
-                description="Cadastre ao menos uma meta e marque-a como principal, para que a saúde do produto possa ser medida."
-              />
-            ) : (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th scope="col">Tipo</th>
-                    <th scope="col" className="num">
-                      Alvo
-                    </th>
-                    <th scope="col">Apuração</th>
-                    <th scope="col">Data-limite</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {goals.map((goal) => (
-                    <tr key={goal.id}>
-                      <td>
-                        <span className="flex items-center gap-2">
-                          {goal.goalTypeLabel ?? "—"}
-                          {goal.isPrimary ? <Badge tone="blue">Principal</Badge> : null}
-                        </span>
-                      </td>
-                      <td className="num">
-                        {goal.unit === "R$"
-                          ? formatCurrency(goal.targetValue)
-                          : `${formatNumber(goal.targetValue)}${goal.unit ? ` ${goal.unit}` : ""}`}
-                      </td>
-                      <td>{GOAL_PERIOD_LABELS[goal.period]}</td>
-                      <td>{formatDate(goal.deadline)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </CardBody>
-        </Card>
+      {/* Bloco A — indicadores da fase atual. */}
+      <Card>
+        <CardHeader
+          title={`Indicadores de ${PHASE_LABELS[product.phase].toLowerCase()}`}
+          description="O que importa acompanhar nesta fase; o que está fora do esperado aparece destacado."
+        />
+        <CardBody className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {indicators.map((indicator) => (
+            <IndicatorTile key={indicator.label} indicator={indicator} />
+          ))}
+        </CardBody>
+      </Card>
 
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Bloco C — saúde. */}
+        <div className="lg:col-span-2">
+          <HealthCard
+            health={metrics.health}
+            delta={healthDelta}
+            thresholds={settings.semaphoreThresholds}
+          />
+        </div>
+
+        {/* Tempo em cada fase, contra a média do portfólio. */}
         <Card>
-          <CardHeader title="Tempo em cada fase" />
+          <CardHeader title="Tempo em cada fase" description="Comparado à média do portfólio." />
           <CardBody>
-            {history.length === 0 ? (
+            {metrics.phases.length === 0 ? (
               <EmptyState title="Sem histórico de fase" />
             ) : (
               <ol className="space-y-3">
-                {history.map((entry) => {
-                  const end = entry.endedAt ?? today;
-                  const days = daysBetween(entry.startedAt, end);
+                {metrics.phases.map((entry, index) => {
+                  const average = phaseAverages[entry.phase];
+                  const slower = average !== undefined && entry.days > average * 1.25;
+
                   return (
-                    <li key={entry.id} className="flex gap-3">
+                    <li key={`${entry.phase}-${index}`} className="flex gap-3">
                       <div className="flex flex-col items-center">
                         <span
-                          className={`mt-1 h-2 w-2 rounded-full ${entry.endedAt ? "bg-fg-muted/40" : "bg-brand"}`}
+                          className={`mt-1 h-2 w-2 rounded-full ${entry.current ? "bg-brand" : "bg-fg-muted/40"}`}
                         />
-                        <span className="w-px flex-1 bg-border" />
+                        {index < metrics.phases.length - 1 ? (
+                          <span className="w-px flex-1 bg-border" />
+                        ) : null}
                       </div>
                       <div className="pb-1">
-                        <p className="text-sm font-medium">{PHASE_LABELS[entry.phase]}</p>
+                        <p className="flex items-center gap-1.5 text-sm font-medium">
+                          {PHASE_LABELS[entry.phase]}
+                          {entry.current ? <Badge tone="blue">atual</Badge> : null}
+                        </p>
                         <p className="text-xs text-fg-muted">
-                          {formatDate(entry.startedAt)} →{" "}
-                          {entry.endedAt ? formatDate(entry.endedAt) : "atual"} ·{" "}
-                          {formatDays(days)}
+                          {formatDays(entry.days)}
+                          {average !== undefined ? (
+                            <>
+                              {" · média do portfólio: "}
+                              {formatDays(average)}
+                              {slower ? (
+                                <span className="text-amber"> (acima da média)</span>
+                              ) : null}
+                            </>
+                          ) : (
+                            " · sem média de portfólio ainda"
+                          )}
                         </p>
                       </div>
                     </li>
@@ -101,32 +119,118 @@ export default async function OverviewPage({ params }: { params: Promise<{ id: s
         </Card>
       </div>
 
-      <Card>
-        <CardHeader title="Governança" />
-        <CardBody className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Info label="Segmento / mercado-alvo" value={product.segment} />
-          <Info label="Modelo de precificação" value={product.pricingModel} />
-          <Info label="Time" value={product.team} />
-          <Info label="Tags" value={product.tags.length > 0 ? product.tags.join(", ") : null} />
-          <div className="sm:col-span-2 lg:col-span-4">
-            <p className="label">Principais concorrentes</p>
-            <p className="whitespace-pre-line text-sm">{product.competitors ?? "—"}</p>
-          </div>
-        </CardBody>
-      </Card>
+      {/* Bloco B — evolução. */}
+      <EvolutionCard metrics={metrics} columnLabels={columnLabels} />
 
-      <Card>
-        <CardHeader
-          title="Indicadores de ciclo de vida, evolução, saúde e continuidade"
-          description="Entram na fase 7, quando o motor de cálculo já estiver pronto."
-        />
-        <CardBody>
-          <EmptyState
-            title="Indicadores em construção"
-            description="Health Score, ROI, payback, projeção e recomendação de continuidade aparecem aqui."
-          />
-        </CardBody>
-      </Card>
+      {/* Bloco D — continuidade. */}
+      <ContinuityCard
+        metrics={metrics}
+        decisions={decisions.map((decision) => ({
+          id: decision.id,
+          recommended: decision.recommended,
+          outcome: decision.outcome,
+          justification: decision.justification,
+          createdAt: decision.createdAt,
+          decidedByName: decision.decidedByName,
+        }))}
+        canDecide={canRegisterDecision(user, product)}
+        currency={settings.defaultCurrency}
+      />
+
+      {/* Metas e governança. */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader title="Metas" description="A principal alimenta o painel executivo." />
+          <CardBody>
+            {metrics.goals.length === 0 ? (
+              <EmptyState
+                title="Nenhuma meta cadastrada"
+                description="Sem meta principal, o componente de atingimento fica de fora do Health Score."
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Tipo</th>
+                      <th scope="col" className="num">Alvo</th>
+                      <th scope="col" className="num">Realizado</th>
+                      <th scope="col" className="num">Atingimento</th>
+                      <th scope="col">Apuração</th>
+                      <th scope="col">Data-limite</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {metrics.goals.map((goal) => {
+                      const money = goal.unit === "R$";
+                      const format = (value: number | null) =>
+                        value === null
+                          ? "—"
+                          : money
+                            ? formatCurrency(value)
+                            : `${formatNumber(value)}${goal.unit ? ` ${goal.unit}` : ""}`;
+
+                      return (
+                        <tr key={goal.id}>
+                          <td>
+                            <span className="flex items-center gap-2">
+                              {goal.typeLabel}
+                              {metrics.primaryGoal?.id === goal.id ? (
+                                <Badge tone="blue">Principal</Badge>
+                              ) : null}
+                            </span>
+                          </td>
+                          <td className="num">{format(goal.target)}</td>
+                          <td className="num">
+                            {goal.realized === null ? (
+                              <span className="text-fg-muted">não medível</span>
+                            ) : (
+                              format(goal.realized)
+                            )}
+                          </td>
+                          <td className="num">
+                            {goal.attainmentPct === null ? (
+                              "—"
+                            ) : (
+                              <span
+                                className={
+                                  goal.attainmentPct >= 100
+                                    ? "text-green"
+                                    : goal.attainmentPct >= 80
+                                      ? "text-amber"
+                                      : "text-red"
+                                }
+                              >
+                                {formatPercent(goal.attainmentPct, 0)}
+                              </span>
+                            )}
+                          </td>
+                          <td>{GOAL_PERIOD_LABELS[goal.period]}</td>
+                          <td>{formatDate(goal.deadline)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="Governança" />
+          <CardBody className="space-y-3">
+            <Info label="Segmento / mercado-alvo" value={product.segment} />
+            <Info label="Modelo de precificação" value={product.pricingModel} />
+            <Info label="Time" value={product.team} />
+            <Info
+              label="Tags"
+              value={product.tags.length > 0 ? product.tags.join(", ") : null}
+            />
+            <Info label="Principais concorrentes" value={product.competitors} />
+          </CardBody>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -135,7 +239,7 @@ function Info({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
       <p className="label">{label}</p>
-      <p className="text-sm">{value ?? "—"}</p>
+      <p className="whitespace-pre-line text-sm">{value ?? "—"}</p>
     </div>
   );
 }

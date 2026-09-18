@@ -132,8 +132,12 @@ export function GanttChart({
     if (!canEdit) return;
     event.preventDefault();
     event.stopPropagation();
-    (event.target as HTMLElement).setPointerCapture(event.pointerId);
     setDrag({ taskId: task.id, mode, originX: event.clientX, deltaDays: 0 });
+    try {
+      (event.target as HTMLElement).setPointerCapture(event.pointerId);
+    } catch {
+      // Without capture the move events still reach the timeline container.
+    }
   }
 
   function onPointerMove(event: React.PointerEvent) {

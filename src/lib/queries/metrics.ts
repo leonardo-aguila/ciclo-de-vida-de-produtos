@@ -50,7 +50,7 @@ import {
   scheduleDeviationDays,
   sCurve,
 } from "@/lib/engine/schedule";
-import { daysBetween, todayIso } from "@/lib/format";
+import { daysBetween, toCompetence as toCompetenceOf, todayIso } from "@/lib/format";
 import { listFinanceEntries, listMonthlySales } from "./finance";
 import { getPhaseHistory, getProductGoals } from "./products";
 import { listTasks, type TaskRow } from "./tasks";
@@ -115,6 +115,26 @@ export type ProductMetrics = {
     overdueActionPlans: number;
     untreatedCriticalInsights: number;
   };
+  costs: {
+    byType: { code: string; label: string; total: number }[];
+    capex: number;
+    opex: number;
+    investment: number;
+    /** Entries categorised as marketing or sales, over the last 3 months. */
+    acquisitionLast3m: number;
+  };
+  insights: {
+    total: number;
+    validated: number;
+    quickWins: number;
+    byStatus: Record<string, number>;
+  };
+  effort: {
+    estimatedHours: number;
+    doneHours: number;
+  };
+  /** Customer acquisition cost, null when there is nothing to divide. */
+  cac: number | null;
   phases: PhaseDuration[];
   today: string;
 };
@@ -344,6 +364,36 @@ export async function getProductMetrics(productId: string): Promise<ProductMetri
 
   const curveDates = series.map((point) => point.competence);
 
+  // Cost breakdown by type, and the acquisition spend the CAC divides.
+  const byTypeMap = new Map<string, { label: string; total: number }>();
+  for (const entry of entries) {
+    const current = byTypeMap.get(entry.typeCode) ?? { label: entry.typeLabel, total: 0 };
+    byTypeMap.set(entry.typeCode, { label: current.label, total: current.total + entry.amount });
+  }
+
+  const threeMonthsAgo = series.length >= 3 ? series[series.length - 3]!.competence : null;
+  const acquisitionLast3m = entries
+    .filter((entry) => {
+      if (!threeMonthsAgo) return false;
+      if (toCompetenceOf(entry.competenceDate) < threeMonthsAgo) return false;
+      return /market|comerc|vendas|publicid/i.test(entry.category ?? "");
+    })
+    .reduce((sum, entry) => sum + entry.amount, 0);
+
+  const newCustomersLast3m = sales
+    .slice(-3)
+    .reduce((sum, sale) => sum + sale.newCustomers, 0);
+
+  const insightRows = await db
+    .select({ status: insights.status, effort: insights.effort, impact: insights.impact })
+    .from(insights)
+    .where(eq(insights.productId, productId));
+
+  const insightsByStatus: Record<string, number> = {};
+  for (const insight of insightRows) {
+    insightsByStatus[insight.status] = (insightsByStatus[insight.status] ?? 0) + 1;
+  }
+
   return {
     productId,
     series,
@@ -387,6 +437,34 @@ export async function getProductMetrics(productId: string): Promise<ProductMetri
       overdueActionPlans: overduePlans.length,
       untreatedCriticalInsights: criticalInsights.length,
     },
+    costs: {
+      byType: Array.from(byTypeMap.entries())
+        .map(([code, value]) => ({ code, label: value.label, total: value.total }))
+        .sort((a, b) => b.total - a.total),
+      capex: byTypeMap.get("capex")?.total ?? 0,
+      opex: byTypeMap.get("opex")?.total ?? 0,
+      investment: byTypeMap.get("investment")?.total ?? 0,
+      acquisitionLast3m,
+    },
+    insights: {
+      total: insightRows.length,
+      // "Validated" means it got past analysis: approved, running or done.
+      validated: insightRows.filter((insight) =>
+        ["approved", "in_progress", "done"].includes(insight.status),
+      ).length,
+      quickWins: insightRows.filter((insight) => insight.impact >= 7 && insight.effort <= 4).length,
+      byStatus: insightsByStatus,
+    },
+    effort: {
+      estimatedHours: tasks.reduce((sum, task) => sum + (task.estimatedHours ?? 0), 0),
+      doneHours: tasks.reduce(
+        (sum, task) => sum + ((task.estimatedHours ?? 0) * task.progress) / 100,
+        0,
+      ),
+    },
+    cac: newCustomersLast3m > 0 && acquisitionLast3m > 0
+      ? acquisitionLast3m / newCustomersLast3m
+      : null,
     phases: phaseDurations(history, today),
     today,
   };

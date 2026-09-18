@@ -89,6 +89,12 @@ describe("componente de execução", () => {
     expect(executionComponent(0, 0, 0, 0).raw).toBeNull();
   });
 
+  it("não dá nota cheia a um cronograma que ainda não começou", () => {
+    const result = executionComponent(0, 0, 0, 8);
+    expect(result.raw).toBeNull();
+    expect(result.detail).toMatch(/ainda não começou/i);
+  });
+
   it("não passa de 100 quando o projeto está adiantado", () => {
     expect(executionComponent(90, 30, 0, 10).raw).toBe(100);
   });
