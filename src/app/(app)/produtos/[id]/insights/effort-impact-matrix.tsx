@@ -248,12 +248,12 @@ export function EffortImpactMatrix({
                 onClick={() => {
                   if (!drag) onOpen(insight.id);
                 }}
-              >
-                <title>
-                  {insight.title} — esforço {position.effort}, impacto {position.impact}, score{" "}
-                  {(position.impact / position.effort).toFixed(1).replace(".", ",")}
-                </title>
-              </circle>
+                role="img"
+                // Not an SVG <title>: React 19 hoists <title> as document
+                // metadata, so the server renders it empty and hydration
+                // breaks. aria-label gives the same accessible name.
+                aria-label={`${insight.title} — esforço ${position.effort}, impacto ${position.impact}, score ${(position.impact / position.effort).toFixed(1).replace(".", ",")}`}
+              />
               {dragging ? (
                 <text
                   x={toX(position.effort)}
