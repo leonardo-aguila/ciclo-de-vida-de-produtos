@@ -140,7 +140,24 @@ async function main() {
   await seedDemoData(db);
 
   await client.end();
+
+  // The health snapshots are what "vs. mês anterior" reads. Without them the
+  // freshly seeded database looks like every product appeared this morning,
+  // and the setup in the README would need a fifth command to be complete.
+  console.log("\ncalculando snapshots de saúde...");
+  const { backfillFinancialSnapshots, writeCurrentSnapshot } = await import("../../src/lib/snapshots");
+  const { db: appDb } = await import("../index");
+  const seeded = await appDb.select({ id: schema.products.id }).from(schema.products);
+  for (const product of seeded) {
+    await backfillFinancialSnapshots(product.id);
+    await writeCurrentSnapshot(product.id);
+  }
+  console.log(`  ${seeded.length} produtos com histórico de saúde reconstruído.`);
+
   console.log("\nseed concluído.");
+  // The application's connection pool stays open once the snapshot step has
+  // used it, and an open pool keeps the process alive forever.
+  process.exit(0);
 }
 
 main().catch((error) => {

@@ -24,7 +24,7 @@ const STATUS_COLOR: Record<InsightRow["status"], string> = {
   new: "#64748b",
   under_analysis: "#8b5cf6",
   approved: "#2563eb",
-  in_progress: "#f59e0b",
+  in_progress: "#b45309",
   done: "#059669",
   discarded: "#94a3b8",
 };

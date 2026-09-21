@@ -66,6 +66,36 @@ npm run test:all
 
 **Nada de tela branca.** Toda rota tem estado de carregamento, de erro e de vazio — e o estado vazio diz o que fazer, não só que não há dados (`src/components/ui/states.tsx`).
 
+**Uma regra, um lugar.** Se duas telas precisam da mesma conta, a conta vai para `src/lib/engine/` e as duas a importam. Escrever a regra inline "só desta vez" já custou caro uma vez: o painel executivo tinha a própria versão da realização de meta, ignorava o período da meta e devolvia zero onde a página do produto devolvia nulo — o mesmo produto lia diferente dependendo de onde se olhava. A regra voltou para `engine/goals.ts`.
+
+**O que não pode ser medido devolve `null`, nunca zero.** Ausência de dado não é resultado ruim. Um produto sem nenhum mês de venda não atingiu 0% da meta: ele não tem meta medida. Isso vale em toda a cadeia — ROI sem custo, projeção sem receita, componente de saúde sem insumo, payback sem resultado recorrente positivo. Componente nulo sai da média com os pesos renormalizados, e quando sobra menos da metade do peso o Health Score inteiro passa a "sem medição" (`MIN_HEALTH_COVERAGE`). Um 100 construído sobre o único componente disponível é o número mais enganoso que o sistema poderia mostrar.
+
+**Toda recomendação carrega o racional e a evidência.** `Recommendation` devolve `rationale: string[]` e `evidence: {label, value}[]`, e a tela mostra os dois. Recomendação que ninguém pode contestar é recomendação que ninguém deveria obedecer — e nenhuma delas é executada pelo sistema: o usuário registra a decisão.
+
+## Armadilhas já encontradas
+
+Cada uma destas custou tempo; estão aqui para não custarem de novo.
+
+**`<title>` dentro de `<svg>` quebra a hidratação.** O React 19 trata `<title>` como metadado de documento e o hoista, então o servidor manda a tag vazia e o cliente a preenche. Use `aria-label` no elemento e, se o número precisa ser lido, uma linha de texto ao lado do gráfico — que serve mouse e teclado.
+
+**`Intl` com `notation: "compact"` diverge entre Node e navegador.** O ICU de cada runtime formata diferente ("R$ 0" contra "R$ 0,0") e o resultado é erro de hidratação. `formatCurrencyCompact` é escrita à mão por isso.
+
+**Subconsulta correlacionada precisa de nome de tabela qualificado.** `(select count(*) from task_templates t where t.package_id = ${taskPackages.id})` liga o `id` à tabela interna e conta sempre zero, sem erro nenhum. Escreva `task_packages.id` literal.
+
+**Componentes do dnd-kit precisam de `id` estável.** Sem ele os `aria-describedby` diferem entre servidor e cliente.
+
+**`"use server"` exige que todo export do arquivo seja `async`.** Um helper puro no meio de um arquivo de actions derruba o build — e o teste não pega, só o navegador.
+
+**Checkbox desmarcada não envia nada.** `z.coerce.boolean().default(true)` faz o desmarcar não ter efeito; o padrão tem de ser `false`.
+
+**`db:reset` também derruba o schema `drizzle`.** Ele guarda o diário de migrations; sobrevivendo ao `DROP SCHEMA public`, o drizzle acredita que tudo já foi aplicado e deixa o banco vazio atrás de um reset bem-sucedido.
+
+**Contraste de cor de status é requisito, não enfeite.** Verde e âmbar vivos reprovam em texto pequeno sobre branco (3,77:1 e 2,94:1). A paleta de `globals.css` e as cores de fase em `labels.ts` estão todas em 3:1 ou melhor — quando a informação está na cor, quem não enxerga a cor não recebe a informação.
+
+**`npm run build` com o `npm run dev` no ar corrompe o `.next`.** Os dois escrevem no mesmo diretório: o dev server passa a responder 500 com `Cannot find module './NNN.js'`, e o build falha em `Failed to collect page data`. Pare o dev server, `rm -rf .next` e rode de novo.
+
+**Verificação no navegador exige aba nova.** As mensagens de console se acumulam por aba, e leitura de DOM por `javascript_tool` pega instantâneo velho. Clique de verdade e captura de tela são a checagem confiável.
+
 ## Estrutura
 
 ```
@@ -81,7 +111,8 @@ src/
   app/               rotas (App Router); (app) é o shell autenticado
   components/        ui/ primitivos, layout/ navegação
   lib/
-    engine/          cálculo puro: ROI, projeção, health, recomendação, cronograma
+    engine/          cálculo puro: ROI, projeção, health, recomendação, cronograma, metas
+    insights-engine/ sugestões a partir dos comentários, atrás de uma interface
     queries/         leitura do banco
     schemas/         zod compartilhado cliente/servidor
     auth/            sessão e autorização

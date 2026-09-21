@@ -139,3 +139,50 @@ describe("ROI projetado", () => {
     expect(projection.basis.rSquared).toBeGreaterThan(0.9);
   });
 });
+
+describe("produto que ainda não vendeu", () => {
+  it("não projeta quando não houve receita nenhuma na janela", () => {
+    // Pré-lançamento: meses de custo, receita zero. A regressão sobre zeros
+    // encaixa perfeitamente e devolveria −100% de ROI com "alta confiança".
+    const series = ["2026-04-01", "2026-05-01", "2026-06-01", "2026-07-01"].map(
+      (competence, index) => ({
+        competence,
+        revenue: 0,
+        cost: 40_000,
+        capex: index === 0 ? 40_000 : 0,
+        opex: index === 0 ? 0 : 40_000,
+        variableCost: index === 0 ? 0 : 40_000,
+        contributionMargin: index === 0 ? 0 : -40_000,
+        result: -40_000,
+        recurringResult: index === 0 ? 0 : -40_000,
+        accumulatedRevenue: 0,
+        accumulatedCost: 40_000 * (index + 1),
+      }),
+    );
+
+    expect(revenueTrend(series)).toBeNull();
+    expect(projectRoi(series)).toBeNull();
+  });
+
+  it("projeta normalmente uma receita estável diferente de zero", () => {
+    const series = ["2026-04-01", "2026-05-01", "2026-06-01", "2026-07-01"].map(
+      (competence, index) => ({
+        competence,
+        revenue: 30_000,
+        cost: 20_000,
+        capex: 0,
+        opex: 20_000,
+        variableCost: 20_000,
+        contributionMargin: 10_000,
+        result: 10_000,
+        recurringResult: 10_000,
+        accumulatedRevenue: 30_000 * (index + 1),
+        accumulatedCost: 20_000 * (index + 1),
+      }),
+    );
+
+    expect(revenueTrend(series)).not.toBeNull();
+    expect(projectRoi(series)?.projectedRoi).toBeGreaterThan(0);
+  });
+});
+

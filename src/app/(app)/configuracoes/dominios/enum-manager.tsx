@@ -101,6 +101,7 @@ export function EnumManager({
           <SortableList
             items={values}
             onReorder={persistOrder}
+            itemLabel={(value) => value.label}
             renderItem={(value) =>
               editing === value.id ? (
                 <ValueForm

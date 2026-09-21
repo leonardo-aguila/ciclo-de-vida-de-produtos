@@ -11,9 +11,9 @@ const SIZE = { width: 640, height: 420 };
 const PADDING = { top: 20, right: 20, bottom: 44, left: 56 };
 
 const QUADRANTS = {
-  stars: { label: "Estrelas", color: "#059669", fill: "rgb(5 150 105 / 0.06)" },
+  stars: { label: "Estrelas", color: "#047857", fill: "rgb(4 120 87 / 0.06)" },
   bets: { label: "Apostas", color: "#2563eb", fill: "rgb(37 99 235 / 0.06)" },
-  review: { label: "Revisar", color: "#ca8a04", fill: "rgb(202 138 4 / 0.06)" },
+  review: { label: "Revisar", color: "#854d0e", fill: "rgb(133 77 14 / 0.06)" },
   sunset: { label: "Candidatos a sunset", color: "#dc2626", fill: "rgb(220 38 38 / 0.06)" },
 } as const;
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  MIN_HEALTH_COVERAGE,
   businessPlanComponent,
   computeHealth,
   executionComponent,
@@ -37,6 +38,11 @@ describe("componente de meta", () => {
   it("não computa sem meta ou com alvo zero", () => {
     expect(goalComponent(null, 100).raw).toBeNull();
     expect(goalComponent(100, null).raw).toBeNull();
+    // Três ausências diferentes, três textos diferentes: elas mandam o
+    // usuário para três telas diferentes.
+    expect(goalComponent(100, null).detail).toMatch(/sem meta principal/i);
+    expect(goalComponent(null, 100, "new_mrr").detail).toMatch(/ainda não há histórico/i);
+    expect(goalComponent(null, 100, "nps").detail).toMatch(/não coleta dados/i);
     expect(goalComponent(100, 0).raw).toBeNull();
     expect(goalComponent(100, 0).detail).toMatch(/alvo zero/i);
   });
@@ -255,5 +261,46 @@ describe("composição do Health Score", () => {
       thresholds,
     );
     expect(result.score).toBe(50);
+  });
+});
+
+describe("cobertura mínima", () => {
+  it("não reporta score quando quase nada pôde ser medido", () => {
+    // Produto recém-criado: sem meta realizada, sem finanças, sem tarefas,
+    // sem plano. Sobra só "nenhum risco em aberto", que vale 100 de graça.
+    const result = computeHealth(
+      {
+        goal: { realized: null, target: 25_000 },
+        financial: { roi: null, contributionMargin: null, revenue: null },
+        execution: { actualProgress: 0, expectedProgress: 0, lateTasks: 0, totalTasks: 0 },
+        businessPlan: { accumulatedDeviationPct: null },
+        risk: { overdueActionPlans: 0, untreatedCriticalInsights: 0 },
+      },
+      DEFAULT_HEALTH_WEIGHTS,
+      DEFAULT_SEMAPHORE,
+    );
+
+    expect(result.coverage).toBe(DEFAULT_HEALTH_WEIGHTS.risk);
+    expect(result.coverage).toBeLessThan(MIN_HEALTH_COVERAGE);
+    // O score aritmético continua lá — mas a tela não deve mostrá-lo.
+    expect(result.score).toBe(100);
+    expect(result.measured).toBe(false);
+  });
+
+  it("reporta score quando a maior parte do peso pôde ser medida", () => {
+    const result = computeHealth(
+      {
+        goal: { realized: 80, target: 100 },
+        financial: { roi: 20, contributionMargin: 5_000, revenue: 20_000 },
+        execution: { actualProgress: 50, expectedProgress: 50, lateTasks: 0, totalTasks: 8 },
+        businessPlan: { accumulatedDeviationPct: null },
+        risk: { overdueActionPlans: 0, untreatedCriticalInsights: 0 },
+      },
+      DEFAULT_HEALTH_WEIGHTS,
+      DEFAULT_SEMAPHORE,
+    );
+
+    expect(result.coverage).toBe(85);
+    expect(result.measured).toBe(true);
   });
 });

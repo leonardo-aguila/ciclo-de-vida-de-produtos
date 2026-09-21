@@ -369,6 +369,10 @@ function TaskCard({
               className="h-6 px-1.5 text-[10px]"
               aria-expanded={menuOpen}
               aria-haspopup="menu"
+              // The visible label is just "Mover" — fine next to the card it
+              // belongs to, useless in a list of eleven identical buttons read
+              // one after the other.
+              aria-label={`Mover ${task.name} para outra coluna`}
               onClick={() => setMenuOpen((open) => !open)}
             >
               <MoveRight className="h-3 w-3" />

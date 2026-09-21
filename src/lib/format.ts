@@ -10,13 +10,6 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   maximumFractionDigits: 2,
 });
 
-const compactCurrencyFormatter = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
-
 const numberFormatter = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 });
 
 export function formatCurrency(value: number | null | undefined, currency = "BRL"): string {
@@ -25,10 +18,36 @@ export function formatCurrency(value: number | null | undefined, currency = "BRL
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency }).format(value);
 }
 
-/** R$ 1,2 mi — for dashboard tiles where the full number would not fit. */
+/**
+ * R$ 1,2 mi — for dashboard tiles where the full number would not fit.
+ *
+ * Written by hand instead of `Intl` compact notation: the ICU data shipped
+ * with Node and the one shipped with the browser disagree on the abbreviations
+ * and on the trailing digit ("R$ 0" on the server, "R$ 0,0" on the client),
+ * and every such disagreement is a hydration mismatch on a page that renders
+ * the same number on both sides.
+ */
 export function formatCurrencyCompact(value: number | null | undefined): string {
   if (value === null || value === undefined || Number.isNaN(value)) return "—";
-  return compactCurrencyFormatter.format(value);
+
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+
+  const scale =
+    abs >= 1_000_000_000
+      ? { divisor: 1_000_000_000, suffix: " bi" }
+      : abs >= 1_000_000
+        ? { divisor: 1_000_000, suffix: " mi" }
+        : abs >= 1_000
+          ? { divisor: 1_000, suffix: " mil" }
+          : { divisor: 1, suffix: "" };
+
+  const scaled = abs / scale.divisor;
+  // One decimal while the mantissa is small, none once it no longer adds
+  // information: "R$ 1,2 mi" but "R$ 847 mil".
+  const digits = scale.divisor === 1 ? 0 : scaled < 100 ? 1 : 0;
+
+  return `${sign}R$ ${formatNumber(scaled, digits)}${scale.suffix}`;
 }
 
 export function formatNumber(value: number | null | undefined, fractionDigits = 2): string {

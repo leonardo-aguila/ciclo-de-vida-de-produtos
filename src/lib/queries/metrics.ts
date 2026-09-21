@@ -31,6 +31,7 @@ import {
   revenueStability,
   type MonthlyPoint,
 } from "@/lib/engine/finance";
+import { realizedForGoal } from "@/lib/engine/goals";
 import { projectRoi, type Projection } from "@/lib/engine/projection";
 import { computeHealth, type HealthResult } from "@/lib/engine/health";
 import { recommend, type Recommendation } from "@/lib/engine/recommendation";
@@ -139,41 +140,6 @@ export type ProductMetrics = {
   today: string;
 };
 
-/**
- * Realized value for a goal type.
- *
- * Only the types the application actually measures return a number; NPS,
- * market share and adoption have no data source here, and inventing one would
- * be worse than saying so.
- */
-function realizedForGoal(
-  typeCode: string,
-  series: MonthlyPoint[],
-  sales: MonthlySale[],
-  period: "monthly" | "quarterly" | "annual",
-): number | null {
-  const lastSale = sales.length > 0 ? sales[sales.length - 1]! : null;
-  const last = series.length > 0 ? series[series.length - 1]! : null;
-  const window = period === "monthly" ? 1 : period === "quarterly" ? 3 : 12;
-
-  switch (typeCode) {
-    case "new_mrr":
-      // Sum over the period being measured.
-      return sales.slice(-window).reduce((sum, sale) => sum + sale.newMrr, 0);
-    case "arr":
-      return lastSale ? lastSale.recurringRevenue * 12 : null;
-    case "one_time_revenue":
-      return series.slice(-window).reduce((sum, point) => sum + point.revenue, 0);
-    case "customers":
-      return lastSale?.activeCustomers ?? null;
-    case "cost_reduction":
-      // Measured as the drop in running cost against the first month.
-      if (series.length < 2 || !last) return null;
-      return Math.max(0, series[0]!.cost - last.cost);
-    default:
-      return null;
-  }
-}
 
 function toGoalProgress(
   goal: {
@@ -325,6 +291,7 @@ export async function getProductMetrics(productId: string): Promise<ProductMetri
       goal: {
         realized: primaryGoal?.realized ?? null,
         target: primaryGoal?.target ?? null,
+        typeCode: primaryGoal?.typeCode,
       },
       financial: {
         roi: summary.roi,
@@ -350,6 +317,7 @@ export async function getProductMetrics(productId: string): Promise<ProductMetri
   const recommendation = recommend(
     {
       health: health.score,
+      healthMeasured: health.measured,
       roi: summary.roi,
       projectedRoi: projection?.projectedRoi ?? null,
       momGrowth: averageMomGrowth(series, 3),

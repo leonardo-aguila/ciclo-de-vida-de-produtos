@@ -8,6 +8,7 @@
  * for its performance. The screen always shows which components counted.
  */
 import type { HealthWeights, SemaphoreThresholds } from "@db/schema";
+import { MEASURABLE_GOAL_TYPES } from "./goals";
 
 export type ComponentKey = "goal" | "financial" | "execution" | "businessPlan" | "risk";
 
@@ -29,7 +30,24 @@ export type HealthResult = {
   components: ComponentResult[];
   /** Sum of the weights that could actually be computed. */
   coverage: number;
+  /**
+   * False when too little could be measured for the score to mean anything.
+   *
+   * A brand-new product has no goal history, no finance, no plan and no
+   * schedule; the only component left is "no open risks", which is trivially
+   * 100. Renormalizing over that one weight produces a perfect score and a
+   * green light for a product nobody knows anything about — the most
+   * misleading number the application could show. The screens read this flag
+   * and say "sem medição" instead.
+   */
+  measured: boolean;
 };
+
+/**
+ * Weight that has to be measurable before the score is reported as a score.
+ * Half of the total: below that, more of the answer is missing than present.
+ */
+export const MIN_HEALTH_COVERAGE = 50;
 
 export const COMPONENT_LABELS: Record<ComponentKey, string> = {
   goal: "Atingimento da meta",
@@ -45,13 +63,33 @@ const clamp = (value: number, min = 0, max = 100) => Math.max(min, Math.min(max,
 /* Components                                                                 */
 /* -------------------------------------------------------------------------- */
 
-/** min(realizado / alvo, 1,2) × 100 — overachievement is capped at 120. */
+/**
+ * min(realizado / alvo, 1,2) × 100 — overachievement is capped at 120.
+ *
+ * When there is no number, the detail says *which* of three different things
+ * is missing. They send the user to three different screens, and collapsing
+ * them into "sem meta cadastrada" sent them to the wrong one.
+ */
 export function goalComponent(
   realized: number | null,
   target: number | null,
+  /** The goal's type code, to tell "not collected" from "no history yet". */
+  typeCode?: string,
 ): { raw: number | null; detail: string } {
-  if (realized === null || target === null) {
+  if (target === null) {
     return { raw: null, detail: "Sem meta principal cadastrada." };
+  }
+  if (realized === null) {
+    if (typeCode !== undefined && !MEASURABLE_GOAL_TYPES.has(typeCode)) {
+      return {
+        raw: null,
+        detail: "O sistema não coleta dados para medir uma meta desse tipo.",
+      };
+    }
+    return {
+      raw: null,
+      detail: "A meta principal existe, mas ainda não há histórico para medir o realizado.",
+    };
   }
   if (target <= 0) {
     return { raw: null, detail: "A meta principal tem alvo zero e não pode ser medida." };
@@ -183,7 +221,7 @@ export function riskComponent(
 /* -------------------------------------------------------------------------- */
 
 export type HealthInput = {
-  goal: { realized: number | null; target: number | null };
+  goal: { realized: number | null; target: number | null; typeCode?: string };
   financial: { roi: number | null; contributionMargin: number | null; revenue: number | null };
   execution: {
     actualProgress: number;
@@ -201,7 +239,7 @@ export function computeHealth(
   thresholds: SemaphoreThresholds,
 ): HealthResult {
   const raw: Record<ComponentKey, { raw: number | null; detail: string }> = {
-    goal: goalComponent(input.goal.realized, input.goal.target),
+    goal: goalComponent(input.goal.realized, input.goal.target, input.goal.typeCode),
     financial: financialComponent(
       input.financial.roi,
       input.financial.contributionMargin,
@@ -249,6 +287,7 @@ export function computeHealth(
       score >= thresholds.green ? "green" : score >= thresholds.amber ? "amber" : "red",
     components,
     coverage,
+    measured: coverage >= MIN_HEALTH_COVERAGE,
   };
 }
 

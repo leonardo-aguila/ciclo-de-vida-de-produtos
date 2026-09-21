@@ -1,67 +1,192 @@
 # portfolio
 
-Gestão e acompanhamento do ciclo de vida de produtos: concepção ao sunset, com visão
-financeira, de execução e de saúde de cada produto, e um painel executivo que consolida
-o portfólio.
+Aplicação web para gerir e acompanhar o **ciclo de vida de produtos** de uma empresa de tecnologia: cadastro, metas, finanças, execução, Business Plan, saúde do produto e recomendação de continuidade — com um painel executivo que consolida o portfólio inteiro.
 
-## Requisitos
+A pergunta que o sistema existe para responder é uma só: **faz sentido continuar investindo neste produto?** Ele responde com número, racional e evidência — e **nunca executa a decisão**. Quem decide é o usuário, e a decisão fica no histórico do produto.
 
-- Node 22+ — nesta máquina está em `~/.local/node-v22.23.2-darwin-arm64/bin`, **fora do PATH**
-- PostgreSQL 16 (Postgres.app), cluster local em `~/.local/pgdata-ponteiro`, porta **5433**
+---
 
-## Setup
+## Subir o projeto
+
+Pré-requisitos: **Node 22+** e **PostgreSQL 16** rodando na porta **5433**.
+
+```bash
+npm install
+npm run db:setup     # cria o papel portfolio_app e os bancos portfolio e portfolio_test
+npm run db:migrate   # aplica as migrations e os grants
+npm run db:seed      # popula configurações, usuários e os 5 produtos demonstrativos
+npm run dev          # http://localhost:3000
+```
+
+Depois disso, `npm run dev` é o **único comando** necessário no dia a dia: ele roda `scripts/ensure-db.sh` antes de subir, que verifica o cluster e o inicia se estiver parado.
+
+Para recomeçar do zero a qualquer momento:
+
+```bash
+npm run db:reset
+```
+
+### Nesta máquina
+
+O Node **não está no PATH** e o cluster Postgres **não é serviço** — não sobe sozinho depois de reiniciar. Antes de qualquer `npm`:
 
 ```bash
 export PATH="$HOME/.local/node-v22.23.2-darwin-arm64/bin:$PATH"
-npm install
-cp .env.example .env.local
-npm run db:setup      # cria o papel portfolio_app e os bancos portfolio e portfolio_test
-npm run db:migrate
-npm run db:seed
-npm run dev           # http://localhost:3000
 ```
 
-`npm run dev` sobe o cluster Postgres automaticamente se ele estiver parado — ele não é
-serviço e não volta sozinho depois de reiniciar a máquina.
+O cluster fica em `~/.local/pgdata-ponteiro`, na porta 5433. O `predev` cuida de subi-lo; se algum comando de banco falhar com `ECONNREFUSED`, rode `bash scripts/ensure-db.sh`.
+
+### Variáveis de ambiente
+
+Copie `.env.example` para `.env.local`. São três:
+
+| Variável | Para quê |
+|---|---|
+| `DATABASE_URL` | conexão da aplicação, como o papel **não-superusuário** `portfolio_app` |
+| `MIGRATION_DATABASE_URL` | conexão das migrations e do seed, como o dono do banco |
+| `TEST_DATABASE_URL` | banco `portfolio_test`, usado pelos testes de integração |
+
+A separação entre as duas primeiras não é cerimônia: é o que torna o log de auditoria **append-only de verdade**. O papel `portfolio_app` tem apenas `INSERT` e `SELECT` em `audit_logs` e `access_logs`, então nem um bug nem uma server action mal escrita conseguem apagar uma linha do log.
+
+---
 
 ## Credenciais do seed
 
-| Login | Senha | Perfil |
-|---|---|---|
-| `admin` | `***SENHA-REMOVIDA***` | Administrador |
-| `marina` | `***SENHA-REMOVIDA***` | Gestor de produto |
-| `rafael` | `***SENHA-REMOVIDA***` | Gestor de produto |
-| `camila` | `***SENHA-REMOVIDA***` | Colaborador |
-| `paulo` | `***SENHA-REMOVIDA***` | Executivo |
+| Login | Senha | Papel | O que enxerga |
+|---|---|---|---|
+| `admin` | `***SENHA-REMOVIDA***` | Administrador | tudo, inclusive usuários e configurações |
+| `marina` | `***SENHA-REMOVIDA***` | Gerente de produto | CRUD nos produtos que possui, leitura nos demais |
+| `rafael` | `***SENHA-REMOVIDA***` | Gerente de produto | idem, dono de outros produtos |
+| `camila` | `***SENHA-REMOVIDA***` | Colaborador | edita tarefas e comentários atribuídos a si |
+| `paulo` | `***SENHA-REMOVIDA***` | Executivo | somente leitura, com painel executivo |
+
+Entre com dois usuários diferentes para ver a autorização funcionando: o `paulo` não recebe os botões de edição, e — mais importante — **também não passa pelo servidor** se tentar a mutação por fora. A UI esconder o botão é consequência, nunca a defesa.
+
+---
+
+## O que vem no seed
+
+Cinco produtos em pontos diferentes do ciclo de vida, com 13 a 24 meses de histórico, escolhidos para que cada caso interessante esteja a um clique:
+
+| Código | Fase | Situação | Recomendação |
+|---|---|---|---|
+| `SKY-LAKE` | Maturidade | Saudável, ROI de 60%, meta em dia | **Escalar** |
+| `SKY-SHIELD` | Crescimento | Cresce rápido, ainda pagando o CAPEX | **Manter** |
+| `SKY-VM` | Declínio | ROI −42%, receita em queda há 23 meses | **Descontinuar** |
+| `SKY-AIOPS` | Desenvolvimento | Pré-lançamento, sem nenhuma venda | Observar |
+| `SKY-COPILOT` | Concepção | Criado há poucos dias, sem histórico | *sem medição* |
+
+Os dois últimos existem para mostrar como o sistema se comporta **sem dados**: o `SKY-COPILOT` não recebe um Health Score inventado, recebe "sem medição" e a explicação do que falta cadastrar.
+
+O seed é ancorado no mês atual, então continua atual por mais tempo que passe entre escrevê-lo e rodá-lo.
+
+---
 
 ## Comandos
 
-| Comando | O que faz |
-|---|---|
-| `npm run dev` | Desenvolvimento (sobe o banco antes) |
-| `npm run build` | Build de produção |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run lint` | ESLint |
-| `npm run test` | Testes unitários do motor de cálculo |
-| `npm run test:integration` | Testes de integração de autenticação e autorização |
-| `npm run db:generate` | Gera migration a partir de `db/schema.ts` |
-| `npm run db:migrate` | Aplica migrations e reaplica grants |
-| `npm run db:seed` | Popula o banco |
-| `npm run db:reset` | Recria o schema do zero (destrutivo) |
+```bash
+npm run dev               # desenvolvimento (sobe o banco antes, se preciso)
+npm run build             # build de produção
+npm start                 # serve o build
 
-## Arquitetura
+npm run typecheck         # tsc --noEmit
+npm run lint
 
-Next.js 15 (App Router) com Server Components e Server Actions; PostgreSQL com Drizzle ORM
-e migrations SQL versionadas; autenticação por sessão própria (tabela + cookie HttpOnly,
-senha em bcrypt). O cálculo — ROI, projeções, payback, Health Score, recomendação de
-continuidade — vive em `src/lib/engine/` como funções puras, sem acesso a banco, e é por
-isso que é coberto por teste unitário. As convenções estão em [CLAUDE.md](CLAUDE.md).
+npm run test              # unitários: motor de cálculo inteiro
+npm run test:integration  # integração: autenticação e autorização, contra portfolio_test
+npm run test:all          # os dois
 
-A trilha de auditoria é append-only garantida pelo banco: o papel da aplicação só tem
-`INSERT` e `SELECT` em `audit_logs`.
+npm run db:setup          # uma vez: papel e bancos
+npm run db:generate       # gera migration SQL a partir de db/schema.ts
+npm run db:migrate        # aplica migrations + grants
+npm run db:seed           # popula (RESET_USERS=1 recria também os usuários)
+npm run db:reset          # destrói e refaz tudo
+npm run db:recalc         # recalcula os snapshots de saúde (--backfill reconstrói o passado)
+```
 
-## Nota sobre dependências
+---
 
-`npm audit` acusa duas advisories transitivas (`postcss` e `esbuild`) que vêm de dentro do
-próprio Next 15 e só se resolvem subindo para o Next 16. São de build, não de runtime, e a
-aplicação roda local. As demais foram corrigidas subindo as versões diretas.
+## Arquitetura em uma página
+
+**Next.js 15 (App Router) + React 19.** Server Components carregam, Server Actions gravam. Não há camada de API separada porque não é preciso: a validação e a autorização acontecem no servidor de qualquer maneira.
+
+**O cálculo mora em `src/lib/engine/`,** em funções **puras** que não conhecem o banco. Elas recebem números e devolvem números e o racional. É essa separação que deixa o motor inteiro coberto por teste unitário sem subir Postgres, e é por isso que a mesma regra não é reescrita em duas telas.
+
+```
+Banco ──> src/lib/queries/ ──> src/lib/engine/ ──> componentes
+          (lê linhas)          (calcula, puro)     (mostram)
+```
+
+`src/lib/queries/metrics.ts` é o orquestrador do produto e `src/lib/queries/dashboard.ts` o do portfólio. Os dois chamam as mesmas funções do motor — quando um deles teve uma cópia própria de uma regra, as duas telas passaram a mostrar números diferentes para o mesmo produto, e foi preciso extrair a regra de volta para o motor.
+
+| Camada | Onde | O que faz |
+|---|---|---|
+| Motor | `src/lib/engine/` | ROI, projeção, payback, Health Score, recomendação, cronograma, metas, plano |
+| Consultas | `src/lib/queries/` | lê o banco e entrega dados simples ao motor |
+| Sugestões | `src/lib/insights-engine/` | destila comentários em temas recorrentes, atrás de uma interface |
+| Validação | `src/lib/schemas/` | Zod, **o mesmo** schema no formulário e na server action |
+| Autorização | `src/lib/auth/` | sessão, políticas e o guard de toda mutação |
+| Formatação | `src/lib/format.ts` | todo pt-BR passa por aqui |
+
+### Health Score
+
+Cinco componentes com pesos configuráveis (meta 30, financeiro 25, execução 20, Business Plan 15, risco 10) e semáforo em 75 / 50.
+
+O que o diferencia de uma média qualquer: **um componente que não pode ser medido devolve nulo e sai da conta**, com os pesos restantes renormalizados. Um produto não é punido por informação que ainda não existe — nem premiado por ela. E quando sobra menos da metade do peso, o score deixa de ser reportado: a tela diz "sem medição", porque um 100 construído sobre o único componente que existe diria mais sobre a falta de dados do que sobre o produto.
+
+### Recomendação de continuidade
+
+Cinco regras, avaliadas da mais severa para a mais branda, lendo os limites das configurações. Cada resultado carrega as frases que o justificam e os números que as sustentam.
+
+**A recomendação nunca é executada.** Ela aparece num card com dois botões — aceitar ou rejeitar — e o que o usuário escolher vira uma linha no histórico do produto, com justificativa obrigatória e um retrato dos números daquele momento.
+
+### Motor de sugestões
+
+`src/lib/insights-engine/` lê os comentários dos produtos e devolve temas recorrentes com tendência, produtos afetados e correlação com a variação do Health Score. Hoje roda por regras, em português, sem chamada de LLM: normalização, stopwords, unigramas e bigramas, agrupamento por coeficiente de sobreposição, tf-idf para rotular.
+
+Está atrás da interface `CommentAnalyzer`. Trocar por um LLM é escrever outra implementação dessa interface e mudar uma linha em `index.ts` — nada mais no aplicativo sabe como as sugestões são produzidas. Cada sugestão carrega os ids dos comentários que a originaram, e o card abre para mostrá-los: sugestão que não dá para conferir é sugestão que se aceita por fé.
+
+---
+
+## Testes
+
+```bash
+npm run test:all
+```
+
+**Unitários** cobrem o motor inteiro, incluindo os casos de borda que quebram cálculo financeiro: custo zero, produto sem nenhuma venda, divisão por zero, produto recém-criado sem histórico, meta com alvo zero, cronograma que ainda não começou, série de receita inteiramente nula.
+
+**Integração** roda contra o banco `portfolio_test` e prova o que a UI não pode provar: login com senha certa e errada, bloqueio após 5 tentativas, sessão expirada, e uma matriz de autorização em que `collaborator` e `executive` recebem negativa **do servidor** em mutações que a interface esconderia.
+
+---
+
+## Decisões que valem explicação
+
+**Sessão própria em vez de biblioteca de autenticação.** Tabela `sessions` + cookie HttpOnly/SameSite=Lax, token de 32 bytes guardado apenas como SHA-256, senha em bcrypt custo 12, bloqueio após 5 tentativas por 15 minutos. Sem dependência em beta e testável em integração, que era requisito.
+
+**Dinheiro é `numeric(14,2)` no banco, lido como `number`.** Nunca `float` na persistência, nunca `string` circulando pelo motor.
+
+**Competência é `date`, não `timestamp`.** Mês é mês, não instante. Só a auditoria usa `timestamptz`.
+
+**Gantt e matriz de esforço × impacto são componentes próprios.** Nenhuma biblioteca livre entrega setas de dependência, caminho crítico, zoom e arrastar/redimensionar com React 19 — e o Gantt é a maior peça de interface do projeto.
+
+**Kanban com @dnd-kit.** Traz sensor de teclado nativo, então a alternativa acessível ao arrastar não é código paralelo. Cada card também tem botões de mover, nomeados com o nome da tarefa.
+
+**Moeda compacta escrita à mão.** O ICU do Node e o do navegador discordam na notação compacta do `Intl`, e cada discordância é um erro de hidratação numa página que renderiza o mesmo número dos dois lados.
+
+---
+
+## O que ficou de fora
+
+- **Sem upload de arquivo.** Anexos são URL + rótulo.
+- **Sem editor rico.** Descrições, premissas e comentários são texto simples.
+- **Sem LLM.** O motor de sugestões roda por regras; a interface existe para a troca.
+- **Sem multi-tenant, sem notificação por e-mail, sem tempo real.** Server Actions e revalidação, não websocket.
+- **Sem exportação PDF por biblioteca.** O botão usa a impressão do navegador sobre uma folha de estilo de impressão — o resultado é um PDF com cabeçalho, data e os filtros aplicados. Trocar por `jspdf` depois não muda nada além do botão.
+- **Metas de NPS, market share e adoção podem ser cadastradas, mas não medidas.** O sistema não coleta esses dados, então o realizado volta nulo em vez de zero — dizer "0% da meta" seria inventar uma medição.
+
+---
+
+## Convenções
+
+Interface, mensagens, moeda e datas em **português do Brasil**. Código, tabelas, colunas, variáveis e comentários em **inglês**. O detalhe das convenções está em [CLAUDE.md](CLAUDE.md).

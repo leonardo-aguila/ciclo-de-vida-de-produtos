@@ -113,6 +113,7 @@ export function TemplateEditor({
               <SortableList
                 items={templates}
                 onReorder={persistOrder}
+                itemLabel={(template) => template.name}
                 renderItem={(template) =>
                   editing === template.id ? (
                     <TemplateForm

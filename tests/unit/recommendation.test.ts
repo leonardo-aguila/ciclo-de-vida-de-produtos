@@ -184,3 +184,77 @@ describe("recomendação de continuidade", () => {
     expect(discontinue.severity).toBeGreaterThan(scale.severity);
   });
 });
+
+describe("produto saudável que ainda não se pagou", () => {
+  it('recomenda "manter" em vez de "observar"', () => {
+    // Crescimento forte, CAPEX ainda não recuperado: o ROI acumulado é
+    // negativo, então "escalar" não se aplica; a saúde está acima da faixa
+    // intermediária, então a regra de "manter" pela faixa também não pega.
+    const result = recommend(
+      {
+        health: 82,
+        roi: -45,
+        projectedRoi: 19,
+        momGrowth: 11,
+        decliningMonths: 0,
+        negativeMarginMonths: 0,
+        goalReached: true,
+        paybackCompetence: null,
+        goalDeadline: null,
+      },
+      DEFAULT_RECOMMENDATION_RULES,
+    );
+
+    expect(result.kind).toBe("keep");
+    expect(result.rationale.join(" ")).toMatch(/não se pagou|payback/i);
+  });
+
+  it('continua em "observar" quando não há projeção para sustentar a continuidade', () => {
+    const result = recommend(
+      {
+        health: 82,
+        roi: -45,
+        projectedRoi: null,
+        momGrowth: 11,
+        decliningMonths: 0,
+        negativeMarginMonths: 0,
+        goalReached: true,
+        paybackCompetence: null,
+        goalDeadline: null,
+      },
+      DEFAULT_RECOMMENDATION_RULES,
+    );
+
+    expect(result.kind).toBe("watch");
+  });
+});
+
+describe("produto sem dados para avaliar", () => {
+  it("não emite veredito quando a saúde não pôde ser medida", () => {
+    const result = recommend(
+      {
+        health: 100,
+        healthMeasured: false,
+        roi: null,
+        projectedRoi: null,
+        momGrowth: null,
+        decliningMonths: 0,
+        negativeMarginMonths: 0,
+        goalReached: null,
+        paybackCompetence: null,
+        goalDeadline: null,
+      },
+      DEFAULT_RECOMMENDATION_RULES,
+    );
+
+    // "Observar" é o mais brando dos valores disponíveis; o que muda é o texto,
+    // que não pode afirmar um Health Score de 100 construído sobre um
+    // componente só.
+    expect(result.kind).toBe("watch");
+    expect(result.rationale[0]).toMatch(/não há dados suficientes/i);
+    expect(result.rationale.join(" ")).not.toMatch(/Health Score de 100/);
+    expect(result.evidence.find((item) => item.label === "Health Score")?.value).toBe("sem medição");
+  });
+});
+
+

@@ -38,15 +38,30 @@ export function HealthCard({
       <CardHeader
         title="Saúde do produto"
         description={`Verde a partir de ${thresholds.green}, amarelo a partir de ${thresholds.amber}.`}
-        action={<Badge tone={semaphore.tone}>{semaphore.label}</Badge>}
+        action={
+          health.measured ? (
+            <Badge tone={semaphore.tone}>{semaphore.label}</Badge>
+          ) : (
+            <Badge tone="neutral">Sem medição</Badge>
+          )
+        }
       />
       <CardBody className="space-y-4">
         <div className="flex flex-wrap items-end gap-4">
           <div>
-            <p className={cn("text-4xl font-semibold tabular-nums", semaphore.text)}>
-              {formatNumber(health.score, 0)}
+            {/* A score resting on less than half the weight is not a score: it
+                would read as a verdict when it is an absence of data. */}
+            <p
+              className={cn(
+                "text-4xl font-semibold tabular-nums",
+                health.measured ? semaphore.text : "text-fg-muted",
+              )}
+            >
+              {health.measured ? formatNumber(health.score, 0) : "—"}
             </p>
-            <p className="text-[11px] text-fg-muted">de 100</p>
+            <p className="text-[11px] text-fg-muted">
+              {health.measured ? "de 100" : "ainda não há o que medir"}
+            </p>
           </div>
 
           <div className="flex items-center gap-1.5 pb-1 text-sm">
@@ -65,7 +80,14 @@ export function HealthCard({
           </div>
         </div>
 
-        {health.coverage < 100 ? (
+        {!health.measured ? (
+          <p className="rounded-lg border border-amber/30 bg-amber/5 px-3 py-2 text-[11px]">
+            Só {formatNumber(health.coverage, 0)} dos 100 pontos de peso puderam ser medidos — menos
+            da metade. O número que sairia daí diria mais sobre a falta de dados do que sobre o
+            produto, então ele não é exibido. Cadastre meta, lançamentos financeiros, tarefas ou um
+            Business Plan para que a saúde passe a ser calculada.
+          </p>
+        ) : health.coverage < 100 ? (
           <p className="rounded-lg border border-border bg-surface-muted/60 px-3 py-2 text-[11px] text-fg-muted">
             {formatNumber(health.coverage, 0)} dos 100 pontos de peso puderam ser medidos. Os
             componentes sem dado ficaram de fora e os demais foram renormalizados — o produto não é

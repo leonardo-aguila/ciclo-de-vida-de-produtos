@@ -32,6 +32,7 @@ import {
   summarize,
   type MonthlyPoint,
 } from "@/lib/engine/finance";
+import { realizedForGoal } from "@/lib/engine/goals";
 import { computeHealth } from "@/lib/engine/health";
 import { projectRoi } from "@/lib/engine/projection";
 import { recommend } from "@/lib/engine/recommendation";
@@ -56,6 +57,8 @@ export type PortfolioProduct = {
   health: number;
   healthDelta: number | null;
   semaphore: "green" | "amber" | "red";
+  /** False when too little could be measured for the score to mean anything. */
+  healthMeasured: boolean;
   roi: number | null;
   projectedRoi: number | null;
   accumulatedRevenue: number;
@@ -91,6 +94,8 @@ export type PortfolioOverview = {
     cost: number;
     roi: number | null;
     red: number;
+    /** Products with too little data for their health to be computed. */
+    unmeasured: number;
     goalTarget: number;
     goalRealized: number;
     goalAttainment: number | null;
@@ -148,6 +153,7 @@ export async function getPortfolioOverview(
         cost: 0,
         roi: null,
         red: 0,
+        unmeasured: 0,
         goalTarget: 0,
         goalRealized: 0,
         goalAttainment: null,
@@ -256,17 +262,10 @@ export async function getPortfolioOverview(
     const projection = projectRoi(series, settings.projectionSettings);
 
     const goal = goals.find((row) => row.productId === product.id) ?? null;
-    const lastSale = productSales[productSales.length - 1] ?? null;
+    // Same function the product page uses — see engine/goals.ts for why this
+    // is not written inline here.
     const goalRealized = goal
-      ? goal.code === "customers"
-        ? (lastSale?.activeCustomers ?? null)
-        : goal.code === "new_mrr"
-          ? productSales.slice(-1).reduce((sum, sale) => sum + sale.newMrr, 0)
-          : goal.code === "arr"
-            ? (lastSale ? lastSale.recurringRevenue * 12 : null)
-            : goal.code === "one_time_revenue"
-              ? series.reduce((sum, point) => sum + point.revenue, 0)
-              : null
+      ? realizedForGoal(goal.code ?? "", series, productSales, goal.period)
       : null;
 
     const plan = plans.find((row) => row.productId === product.id) ?? null;
@@ -299,7 +298,11 @@ export async function getPortfolioOverview(
     const totalTasks = productTasks.length;
     const health = computeHealth(
       {
-        goal: { realized: goalRealized, target: goal?.targetValue ?? null },
+        goal: {
+          realized: goalRealized,
+          target: goal?.targetValue ?? null,
+          typeCode: goal?.code ?? undefined,
+        },
         financial: {
           roi: summary.roi,
           contributionMargin: summary.lastMargin,
@@ -326,6 +329,7 @@ export async function getPortfolioOverview(
     const recommendation = recommend(
       {
         health: health.score,
+        healthMeasured: health.measured,
         roi: summary.roi,
         projectedRoi: projection?.projectedRoi ?? null,
         momGrowth: averageMomGrowth(series, 3),
@@ -356,6 +360,7 @@ export async function getPortfolioOverview(
       health: health.score,
       healthDelta: previousSnapshot ? health.score - previousSnapshot.score : null,
       semaphore: health.semaphore,
+      healthMeasured: health.measured,
       roi: summary.roi,
       projectedRoi: projection?.projectedRoi ?? null,
       accumulatedRevenue: summary.accumulatedRevenue,
@@ -384,8 +389,15 @@ export async function getPortfolioOverview(
   const revenue = portfolio.reduce((sum, product) => sum + product.accumulatedRevenue, 0);
   const cost = portfolio.reduce((sum, product) => sum + product.accumulatedCost, 0);
 
-  const goalTarget = portfolio.reduce((sum, product) => sum + (product.goalTarget ?? 0), 0);
-  const goalRealized = portfolio.reduce((sum, product) => sum + (product.goalRealized ?? 0), 0);
+  // Only products whose goal can actually be measured enter the aggregate.
+  // Counting the target of a product that has not started selling, with
+  // nothing on the realized side, makes the portfolio look like it is missing
+  // a goal it simply cannot measure yet.
+  const comparableGoals = portfolio.filter(
+    (product) => product.goalTarget !== null && product.goalRealized !== null,
+  );
+  const goalTarget = comparableGoals.reduce((sum, product) => sum + product.goalTarget!, 0);
+  const goalRealized = comparableGoals.reduce((sum, product) => sum + product.goalRealized!, 0);
 
   const phaseList = Array.from(new Set(portfolio.map((product) => product.phase)));
   const phases: PhaseSummary[] = phaseList.map((phase) => {
@@ -412,7 +424,11 @@ export async function getPortfolioOverview(
       // average of each product's ROI — averaging percentages would let a tiny
       // product with a huge ratio dominate the number.
       roi: cost > 0 ? ((revenue - cost) / cost) * 100 : null,
-      red: portfolio.filter((product) => product.semaphore === "red").length,
+      // Only products whose health could actually be measured count as red: a
+      // brand-new product has no score to be red about.
+      red: portfolio.filter((product) => product.healthMeasured && product.semaphore === "red")
+        .length,
+      unmeasured: portfolio.filter((product) => !product.healthMeasured).length,
       goalTarget,
       goalRealized,
       goalAttainment: goalTarget > 0 ? (goalRealized / goalTarget) * 100 : null,

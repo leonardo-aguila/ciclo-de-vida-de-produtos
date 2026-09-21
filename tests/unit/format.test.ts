@@ -6,6 +6,7 @@ import {
   daysBetween,
   formatCompetence,
   formatCurrency,
+  formatCurrencyCompact,
   formatDate,
   formatPercent,
   formatSignedPercent,
@@ -74,5 +75,26 @@ describe("aritmética de datas", () => {
       "2024-03-01",
     ]);
     expect(competenceRange("2024-03-01", "2024-01-01")).toEqual([]);
+  });
+});
+
+describe("moeda compacta", () => {
+  it("abrevia em mil, mi e bi sem depender do ICU do runtime", () => {
+    expect(formatCurrencyCompact(0)).toBe("R$ 0");
+    expect(formatCurrencyCompact(847)).toBe("R$ 847");
+    expect(formatCurrencyCompact(1_200)).toBe("R$ 1,2 mil");
+    expect(formatCurrencyCompact(847_000)).toBe("R$ 847 mil");
+    expect(formatCurrencyCompact(3_140_000)).toBe("R$ 3,1 mi");
+    expect(formatCurrencyCompact(2_400_000_000)).toBe("R$ 2,4 bi");
+  });
+
+  it("preserva o sinal", () => {
+    expect(formatCurrencyCompact(-1_500_000)).toBe("-R$ 1,5 mi");
+  });
+
+  it("devolve travessão para ausência de valor", () => {
+    expect(formatCurrencyCompact(null)).toBe("—");
+    expect(formatCurrencyCompact(undefined)).toBe("—");
+    expect(formatCurrencyCompact(Number.NaN)).toBe("—");
   });
 });

@@ -12,8 +12,11 @@
     --fg-muted: 100 110 125;
     --brand: 29 78 216;
     --brand-fg: 255 255 255;
-    --green: 5 150 105;
-    --amber: 202 138 4;
+    /* Escurecidos contra o branco até passarem em texto pequeno: o verde
+       original ficava em 3,77:1 e o âmbar em 2,94:1 — e são justamente as
+       cores de status, onde a informação está na cor. */
+    --green: 4 120 87;
+    --amber: 133 77 14;
     --red: 220 38 38;
     --blue: 37 99 235;
     --violet: 124 58 237;
@@ -100,9 +103,19 @@
   }
 }
 
+/* Shown only on paper: the printed report needs a heading the screen already
+   has in the chrome around it. */
+.print-only {
+  display: none;
+}
+
 @media print {
   .no-print {
     display: none !important;
+  }
+
+  .print-only {
+    display: block;
   }
 
   body {

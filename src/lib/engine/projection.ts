@@ -22,6 +22,10 @@ export function revenueTrend(series: MonthlyPoint[], windowMonths = 6): Trend | 
   const window = series.slice(-windowMonths);
   // Two points make a line but say nothing about a trend; three is the floor.
   if (window.length < 3) return null;
+  // A window with no revenue at all is not a flat trend — it is a product that
+  // has not started selling. Extrapolating those zeros forward would hand a
+  // pre-launch product a confident ROI of −100% for a chance it never had.
+  if (window.every((point) => point.revenue <= 0)) return null;
 
   const n = window.length;
   const xs = window.map((_, index) => index);

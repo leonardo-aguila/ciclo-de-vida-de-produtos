@@ -11,6 +11,12 @@ import type { RecommendationRules, RecommendationValue } from "@db/schema";
 
 export type RecommendationInput = {
   health: number;
+  /**
+   * False when too little could be measured for the Health Score to mean
+   * anything. Defaults to true, so callers that do not track it behave as
+   * before.
+   */
+  healthMeasured?: boolean;
   /** Accumulated ROI in percent, null when there is no cost. */
   roi: number | null;
   /** Projected 12-month ROI in percent, null when it cannot be projected. */
@@ -71,7 +77,10 @@ export function recommend(
   rules: RecommendationRules,
 ): Recommendation {
   const evidence: { label: string; value: string }[] = [
-    { label: "Health Score", value: input.health.toFixed(0) },
+    {
+      label: "Health Score",
+      value: input.healthMeasured === false ? "sem medição" : input.health.toFixed(0),
+    },
     { label: "ROI acumulado", value: pct(input.roi) },
     { label: "ROI projetado 12M", value: pct(input.projectedRoi) },
     { label: "Crescimento MoM (3M)", value: pct(input.momGrowth) },
@@ -93,6 +102,20 @@ export function recommend(
     evidence,
     severity: SEVERITY[kind],
   });
+
+  // 0. Nothing to recommend yet.
+  //
+  // A product created last week has no goal history, no finance and no plan.
+  // Every rule below reads numbers that do not exist, and the mildest of them
+  // would still print "Health Score de 100" — a verdict built on the single
+  // component that scores full marks for having no open risks.
+  if (input.healthMeasured === false) {
+    return build("watch", [
+      "Ainda não há dados suficientes para avaliar a continuidade deste produto.",
+      "Sem meta realizada, lançamentos financeiros ou cronograma, qualquer recomendação diria mais sobre a falta de informação do que sobre o produto.",
+      "Sugestão: cadastrar meta, orçamento e as primeiras tarefas — a recomendação aparece assim que houver o que medir.",
+    ]);
+  }
 
   // 1. Discontinue — losing money now, projected to keep losing, and shrinking.
   if (
@@ -168,6 +191,25 @@ export function recommend(
       `Health Score de ${input.health.toFixed(0)}, na faixa intermediária.`,
       `O ROI projetado para 12 meses é de ${pct(input.projectedRoi)}, o que sustenta a continuidade.`,
       "Sugestão: manter o curso e acompanhar mensalmente.",
+    ]);
+  }
+
+  // 6. Keep — healthy, but still paying back the investment.
+  //
+  // Without this branch a product in full growth, with a positive projected
+  // ROI and an accumulated ROI still negative because the CAPEX has not been
+  // recovered yet, falls past both the middle band (its health is too good)
+  // and the scale rule (its ROI is still negative), and lands on "watch". That
+  // is the wrong answer: what it needs is to stay the course.
+  if (
+    input.health >= rules.keep.minHealth &&
+    input.projectedRoi !== null &&
+    input.projectedRoi > rules.keep.minProjectedRoi
+  ) {
+    return build("keep", [
+      `Health Score de ${input.health.toFixed(0)}, mas o ROI acumulado ainda é de ${pct(input.roi)}: o investimento não se pagou.`,
+      `O ROI projetado para 12 meses é de ${pct(input.projectedRoi)}, o que indica retorno dentro do horizonte.`,
+      "Sugestão: manter o curso e acompanhar o payback mensalmente.",
     ]);
   }
 

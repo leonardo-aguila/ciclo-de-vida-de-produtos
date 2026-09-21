@@ -171,7 +171,11 @@ describe("métricas do produto", () => {
     expect(metrics.primaryGoal!.realized).toBeNull();
     const goalComponent = metrics.health.components.find((c) => c.key === "goal")!;
     expect(goalComponent.raw).toBeNull();
-    expect(goalComponent.detail).toMatch(/sem meta principal/i);
+    // A meta existe e está cadastrada; o que falta é fonte de dado para o
+    // tipo dela (NPS). Dizer "sem meta principal" mandaria o usuário
+    // cadastrar de novo uma meta que já está lá.
+    expect(goalComponent.detail).toMatch(/não coleta dados/i);
+    expect(goalComponent.detail).not.toMatch(/sem meta principal/i);
   });
 
   it("conta plano de ação vencido como risco em aberto", async () => {

@@ -32,13 +32,20 @@ export const PHASE_ORDER: LifecyclePhase[] = [
   "discontinued",
 ];
 
+/**
+ * Phase colours, all at 3:1 or better against white.
+ *
+ * They are the legend of every chart in the application, so a phase nobody can
+ * see is a phase nobody can read off the matrix. The bright originals
+ * (#10b981, #f59e0b, #84cc16, #06b6d4) sat between 1,98:1 and 2,54:1.
+ */
 export const PHASE_COLORS: Record<LifecyclePhase, string> = {
   conception: "#8b5cf6",
   development: "#3b82f6",
-  launch: "#06b6d4",
-  growth: "#10b981",
-  maturity: "#84cc16",
-  decline: "#f59e0b",
+  launch: "#0891b2",
+  growth: "#059669",
+  maturity: "#4d7c0f",
+  decline: "#b45309",
   discontinued: "#6b7280",
 };
 

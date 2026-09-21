@@ -34,12 +34,19 @@ export function SortableList<T extends { id: string }>({
   items,
   onReorder,
   renderItem,
+  itemLabel,
   disabled,
   className,
 }: {
   items: T[];
   onReorder: (ordered: T[]) => void;
   renderItem: (item: T, index: number) => React.ReactNode;
+  /**
+   * The item's name, for the reorder buttons to announce. Without it a screen
+   * reader reads "mover para cima" a dozen times in a row with nothing to tell
+   * the rows apart.
+   */
+  itemLabel?: (item: T, index: number) => string;
   disabled?: boolean;
   className?: string;
 }) {
@@ -82,6 +89,7 @@ export function SortableList<T extends { id: string }>({
               index={index}
               total={items.length}
               disabled={disabled}
+              label={itemLabel?.(item, index) ?? `item ${index + 1}`}
               onMove={move}
             >
               {renderItem(item, index)}
@@ -98,6 +106,7 @@ function SortableRow({
   index,
   total,
   disabled,
+  label,
   onMove,
   children,
 }: {
@@ -105,6 +114,7 @@ function SortableRow({
   index: number;
   total: number;
   disabled?: boolean;
+  label: string;
   onMove: (index: number, direction: -1 | 1) => void;
   children: React.ReactNode;
 }) {
@@ -127,7 +137,7 @@ function SortableRow({
           <button
             type="button"
             className="cursor-grab touch-none rounded p-0.5 text-fg-muted hover:bg-surface-muted active:cursor-grabbing"
-            aria-label={`Arrastar item ${index + 1} de ${total}`}
+            aria-label={`Arrastar ${label} (item ${index + 1} de ${total})`}
             {...attributes}
             {...listeners}
           >
@@ -139,7 +149,7 @@ function SortableRow({
             size="icon"
             className="h-5 w-5"
             disabled={index === 0}
-            aria-label={`Mover para cima (posição ${index})`}
+            aria-label={`Mover ${label} para a posição ${index}`}
             onClick={() => onMove(index, -1)}
           >
             <ChevronUp className="h-3 w-3" />
@@ -150,7 +160,7 @@ function SortableRow({
             size="icon"
             className="h-5 w-5"
             disabled={index === total - 1}
-            aria-label={`Mover para baixo (posição ${index + 2})`}
+            aria-label={`Mover ${label} para a posição ${index + 2}`}
             onClick={() => onMove(index, 1)}
           >
             <ChevronDown className="h-3 w-3" />

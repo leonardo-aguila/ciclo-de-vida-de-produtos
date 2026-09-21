@@ -13,6 +13,7 @@ import { RECOMMENDATION_TONES } from "@/lib/engine/recommendation";
 import {
   formatCurrency,
   formatCurrencyCompact,
+  formatDate,
   formatDays,
   formatInteger,
   formatNumber,
@@ -55,9 +56,40 @@ export function DashboardClient({
   currency: string;
 }) {
   const { products, totals, phases } = overview;
+  const searchParams = useSearchParams();
+
+  // Spelled out for the printed header: a report that does not say what was
+  // filtered cannot be checked by whoever receives it.
+  const activeFilterLabels = React.useMemo(() => {
+    const labels: string[] = [];
+    const phase = searchParams.get("fase");
+    if (phase) labels.push(`fase ${PHASE_LABELS[phase as keyof typeof PHASE_LABELS] ?? phase}`);
+    const owner = searchParams.get("responsavel");
+    if (owner) {
+      labels.push(`responsável ${owners.find((item) => item.id === owner)?.label ?? owner}`);
+    }
+    const category = searchParams.get("categoria");
+    if (category) {
+      labels.push(`categoria ${categories.find((item) => item.id === category)?.label ?? category}`);
+    }
+    const from = searchParams.get("de");
+    const to = searchParams.get("ate");
+    if (from || to) {
+      labels.push(`período ${from ? formatDate(from) : "início"} a ${to ? formatDate(to) : "hoje"}`);
+    }
+    return labels;
+  }, [searchParams, owners, categories]);
 
   const ranking = React.useMemo(
-    () => [...products].sort((a, b) => b.health - a.health),
+    () =>
+      // Products whose health could not be measured go last, whatever the
+      // arithmetic score says: a brand-new product scoring 100 on the single
+      // component it has would otherwise lead the ranking of healthiest
+      // products in the portfolio.
+      [...products].sort((a, b) => {
+        if (a.healthMeasured !== b.healthMeasured) return a.healthMeasured ? -1 : 1;
+        return b.health - a.health;
+      }),
     [products],
   );
 
@@ -111,8 +143,8 @@ export function DashboardClient({
           nome: product.name,
           fase: PHASE_LABELS[product.phase],
           responsavel: product.ownerName,
-          health: Math.round(product.health),
-          semaforo: product.semaphore,
+          health: product.healthMeasured ? Math.round(product.health) : null,
+          semaforo: product.healthMeasured ? product.semaphore : "sem medição",
           roi: product.roi,
           roi_projetado: product.projectedRoi,
           receita_acumulada: product.accumulatedRevenue,
@@ -142,6 +174,18 @@ export function DashboardClient({
 
   return (
     <div className="space-y-4">
+      {/* Só no papel: sem isto o PDF sai sem dizer o que é nem de quando. */}
+      <header className="print-only mb-4 border-b border-border pb-3">
+        {/* Não é <h1>: o da tela já ocupa esse papel, e dois h1 na mesma
+            página confundem a navegação por cabeçalhos. */}
+        <p className="text-lg font-semibold">Painel executivo — portfólio de produtos</p>
+        <p className="text-sm text-fg-muted">
+          {products.length} {products.length === 1 ? "produto" : "produtos"} no recorte ·
+          emitido em {formatDate(overview.today)}
+          {activeFilterLabels.length > 0 ? ` · filtros: ${activeFilterLabels.join(", ")}` : ""}
+        </p>
+      </header>
+
       <header className="no-print flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold">Painel executivo</h1>
@@ -191,6 +235,11 @@ export function DashboardClient({
               label="Produtos em vermelho"
               value={formatInteger(totals.red)}
               tone={totals.red > 0 ? "red" : "green"}
+              hint={
+                totals.unmeasured > 0
+                  ? `${formatInteger(totals.unmeasured)} ${totals.unmeasured === 1 ? "produto ainda sem dados" : "produtos ainda sem dados"} para medir a saúde.`
+                  : undefined
+              }
             />
             <Tile
               label="Meta agregada"
@@ -312,25 +361,31 @@ export function DashboardClient({
                           <Badge tone="neutral">{PHASE_LABELS[product.phase]}</Badge>
                         </td>
                         <td className="num">
-                          <span
-                            className={cn(
-                              "inline-flex items-center gap-1.5 font-semibold",
-                              product.semaphore === "green" && "text-green",
-                              product.semaphore === "amber" && "text-amber",
-                              product.semaphore === "red" && "text-red",
-                            )}
-                          >
+                          {product.healthMeasured ? (
                             <span
                               className={cn(
-                                "h-2 w-2 rounded-full",
-                                product.semaphore === "green" && "bg-green",
-                                product.semaphore === "amber" && "bg-amber",
-                                product.semaphore === "red" && "bg-red",
+                                "inline-flex items-center gap-1.5 font-semibold",
+                                product.semaphore === "green" && "text-green",
+                                product.semaphore === "amber" && "text-amber",
+                                product.semaphore === "red" && "text-red",
                               )}
-                              aria-hidden
-                            />
-                            {formatNumber(product.health, 0)}
-                          </span>
+                            >
+                              <span
+                                className={cn(
+                                  "h-2 w-2 rounded-full",
+                                  product.semaphore === "green" && "bg-green",
+                                  product.semaphore === "amber" && "bg-amber",
+                                  product.semaphore === "red" && "bg-red",
+                                )}
+                                aria-hidden
+                              />
+                              {formatNumber(product.health, 0)}
+                            </span>
+                          ) : (
+                            <span className="text-fg-muted" title="Dados insuficientes para calcular">
+                              sem medição
+                            </span>
+                          )}
                         </td>
                         <td className="num">
                           <span
