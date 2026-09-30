@@ -50,17 +50,17 @@ A separação entre as duas primeiras não é cerimônia: é o que torna o log d
 
 ---
 
-## Credenciais do seed
+## Acesso
 
-| Login | Senha | Papel | O que enxerga |
-|---|---|---|---|
-| `admin` | `***SENHA-REMOVIDA***` | Administrador | tudo, inclusive usuários e configurações |
-| `marina` | `***SENHA-REMOVIDA***` | Gerente de produto | CRUD nos produtos que possui, leitura nos demais |
-| `rafael` | `***SENHA-REMOVIDA***` | Gerente de produto | idem, dono de outros produtos |
-| `camila` | `***SENHA-REMOVIDA***` | Colaborador | edita tarefas e comentários atribuídos a si |
-| `paulo` | `***SENHA-REMOVIDA***` | Executivo | somente leitura, com painel executivo |
+O seed cria um administrador, `admin`. **A senha não está neste repositório** — ela é definida no momento do seed e impressa no terminal, ou rotacionada depois. Se você perdeu a sua:
 
-Entre com dois usuários diferentes para ver a autorização funcionando: o `paulo` não recebe os botões de edição, e — mais importante — **também não passa pelo servidor** se tentar a mutação por fora. A UI esconder o botão é consequência, nunca a defesa.
+```bash
+npm run db:seed         # RESET_USERS=1 para recriar o admin do zero
+```
+
+Os responsáveis importados do Jira aparecem como usuários **inativos**: existem para serem citados como donos de produto e não conseguem entrar no sistema.
+
+Para ver a autorização funcionando com papéis diferentes, crie usuários em `/usuarios` — `product_manager` edita os produtos que possui, `collaborator` só o que lhe é atribuído e `executive` é somente leitura. O importante é que a UI esconder o botão é consequência: o servidor recusa a mutação de qualquer jeito.
 
 ---
 
