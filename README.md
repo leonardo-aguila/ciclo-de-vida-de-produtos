@@ -112,6 +112,23 @@ Receita, custo, meta, Business Plan. **Nada disso é inventado na importação**
 
 Para que o painel ganhe sentido financeiro, os lançamentos e as metas precisam ser cadastrados na própria aplicação. Preencher essas telas com números plausíveis deixaria o painel bonito e errado.
 
+### Pacotes de tarefas a partir dos épicos
+
+```bash
+npm run db:packages:jira
+```
+
+Transforma dois lançamentos reais em pacotes reaplicáveis, com as datas viradas em deslocamentos a partir da data de início do produto:
+
+| Pacote | Origem | Modelos | Para quando |
+|---|---|---|---|
+| **Novo Produto** | DEMO-160, Lançamento Nimbus Astra 2027 | 28 | Concepção — go-to-market de algo que ainda não existe |
+| **Nova Release** | DEMO-148, Lançamento Studio 2027 | 11 | Crescimento — ciclo de uma versão nova |
+
+Os nomes perdem o prefixo do produto (`[Astra 2027 · Pocket] F1 · Definir pricing` vira `F1 · Definir pricing`) e cada modelo guarda na descrição o item do Jira de onde saiu. A categoria é uma leitura do texto, não veio do Jira — o que as regras não reconhecem fica em branco em vez de ser empurrado para uma gaveta.
+
+O comando é reaplicável: pacote de mesmo nome é substituído, não duplicado.
+
 ### Responsáveis
 
 As pessoas que aparecem como responsáveis vêm do Jira e existem apenas como referência: entram **inativas**, com senha aleatória que ninguém possui, e não conseguem entrar no sistema. Criar login de colega com senha conhecida seria distribuir conta que ninguém pediu. Para usar a aplicação, entre como `admin`.
@@ -137,6 +154,7 @@ npm run db:generate       # gera migration SQL a partir de db/schema.ts
 npm run db:migrate        # aplica migrations + grants
 npm run db:seed           # popula com os dados demonstrativos (RESET_USERS=1 recria os usuários)
 npm run db:seed:jira      # limpa e popula a partir do quadro Roadmap do Jira
+npm run db:packages:jira  # cria os pacotes "Novo Produto" e "Nova Release" a partir dos épicos
 npm run db:reset          # destrói e refaz tudo
 npm run db:recalc         # recalcula os snapshots de saúde (--backfill reconstrói o passado)
 ```

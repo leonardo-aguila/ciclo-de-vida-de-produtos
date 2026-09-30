@@ -42,6 +42,7 @@ npm run db:generate   # gera nova migration SQL a partir de db/schema.ts
 npm run db:migrate    # aplica migrations + reaplica os grants do papel da aplicação
 npm run db:seed       # popula configurações, enums, usuários e dados demonstrativos
 npm run db:seed:jira  # limpa os dados de produto e importa o quadro Roadmap do Jira
+npm run db:packages:jira  # deriva os pacotes "Novo Produto" e "Nova Release" dos épicos
 npm run db:reset      # derruba o schema, migra e semeia de novo (destrutivo)
 
 npm run dev           # sobe o banco se preciso e roda o Next em desenvolvimento
@@ -108,6 +109,7 @@ db/
   seed/              enums, usuários e dados demonstrativos
     jira-roadmap.json  extrato do quadro Roadmap do Jira (versionado)
     jira.ts            importa esse extrato para o modelo da aplicação
+    packages-jira.ts   deriva pacotes de tarefas dos épicos de lançamento
 scripts/
   ensure-db.sh       sobe o cluster se estiver parado (roda no predev)
   setup-db.sh        cria papel e bancos

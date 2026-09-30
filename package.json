@@ -21,6 +21,7 @@
     "db:migrate": "tsx db/migrate.ts",
     "db:seed": "tsx db/seed/run.ts",
     "db:seed:jira": "tsx db/seed/jira-run.ts",
+    "db:packages:jira": "tsx db/seed/packages-jira-run.ts",
     "db:reset": "tsx db/reset.ts && npm run db:migrate && npm run db:seed",
     "db:recalc": "tsx db/recalc.ts"
   },
