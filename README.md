@@ -133,6 +133,20 @@ Os nomes perdem o prefixo do produto (`[Astra 2027 · Pocket] F1 · Definir pric
 
 O comando é reaplicável: pacote de mesmo nome é substituído, não duplicado.
 
+### Um produto de exemplo, para o painel funcionar
+
+```bash
+npm run db:seed:example
+```
+
+Cadastra (ou substitui) **um** produto fictício ao lado dos oito do Jira, com receita, custo, metas, Business Plan, plano de ação, insights e comentários — o bastante para o painel executivo mostrar todos os painéis: ROI consolidado, matriz de portfólio, ranking por Health Score, alertas e sugestões a partir dos comentários.
+
+As tarefas vêm do pacote **Novo Produto**, então o cronograma é o go-to-market real derivado do lançamento do Astra, e não uma segunda invenção. Rode `npm run db:packages:jira` antes.
+
+Ele se chama **"Produto Exemplo (dados fictícios)"**, e o aviso está no nome e não numa nota de rodapé, porque o nome é o que viaja: aparece na matriz, no ranking, no CSV exportado e no PDF impresso. Ao lado de oito lançamentos reais com colegas de verdade anexados, um R$ 894 mil inventado que não esteja marcado como inventado é um número esperando para ser citado numa reunião.
+
+O comando não toca em mais nada — os produtos do Jira e os pacotes ficam como estão.
+
 ### Responsáveis
 
 As pessoas que aparecem como responsáveis vêm do Jira e existem apenas como referência: entram **inativas**, com senha aleatória que ninguém possui, e não conseguem entrar no sistema. Criar login de colega com senha conhecida seria distribuir conta que ninguém pediu. Para usar a aplicação, entre como `admin`.
@@ -159,6 +173,7 @@ npm run db:migrate        # aplica migrations + grants
 npm run db:seed           # popula com os dados demonstrativos (RESET_USERS=1 recria os usuários)
 npm run db:seed:jira      # limpa e popula a partir do quadro Roadmap do Jira
 npm run db:packages:jira  # cria os pacotes "Novo Produto" e "Nova Release" a partir dos épicos
+npm run db:seed:example   # cadastra um produto fictício com dados completos
 npm run db:reset          # destrói e refaz tudo
 npm run db:recalc         # recalcula os snapshots de saúde (--backfill reconstrói o passado)
 ```
