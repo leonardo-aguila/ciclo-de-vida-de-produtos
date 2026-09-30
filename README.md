@@ -118,12 +118,16 @@ Para que o painel ganhe sentido financeiro, os lançamentos e as metas precisam 
 npm run db:packages:jira
 ```
 
-Transforma dois lançamentos reais em pacotes reaplicáveis, com as datas viradas em deslocamentos a partir da data de início do produto:
+Transforma dois lançamentos reais em pacotes reaplicáveis, com as datas viradas em deslocamentos:
 
-| Pacote | Origem | Modelos | Para quando |
-|---|---|---|---|
-| **Novo Produto** | DEMO-160, Lançamento Nimbus Astra 2027 | 28 | Concepção — go-to-market de algo que ainda não existe |
-| **Nova Release** | DEMO-148, Lançamento Studio 2027 | 11 | Crescimento — ciclo de uma versão nova |
+| Pacote | Origem | Modelos | Âncora | Para quando |
+|---|---|---|---|---|
+| **Novo Produto** | DEMO-160, Nimbus Astra 2027 | 28 | Data de início do produto | Concepção — go-to-market de algo que ainda não existe |
+| **Nova Release** | DEMO-148, Studio 2027 | 11 | Lançamento previsto | Crescimento — ciclo de uma versão nova |
+
+Os dois são construídos de pontas opostas. Um produto que ainda não existe não tem data de lançamento para contar de trás, então o plano corre para frente a partir do início. Uma release tem: o dia zero é a subida da versão, o que vem antes fica negativo (`T-45 · atualizar documentação`) e o que vem depois, positivo (`D+25 · retrospectiva e desligamento da versão anterior`).
+
+O dia zero da release não é a data-limite do épico — essa é o fim da iniciativa inteira. É o início do `F3 · Realizar rollout em ondas`, declarado em `anchorIssueKey` no código, porque é a data de que o plano todo depende. Se o produto não tiver lançamento previsto, a aplicação avisa e calcula a partir da data de início.
 
 Os nomes perdem o prefixo do produto (`[Astra 2027 · Pocket] F1 · Definir pricing` vira `F1 · Definir pricing`) e cada modelo guarda na descrição o item do Jira de onde saiu. A categoria é uma leitura do texto, não veio do Jira — o que as regras não reconhecem fica em branco em vez de ser empurrado para uma gaveta.
 

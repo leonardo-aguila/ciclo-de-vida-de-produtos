@@ -14,14 +14,17 @@
  * The dates become offsets, which is what makes a plan reusable. The anchor is
  * chosen per package, because the two plans are built from opposite ends:
  *
- * Both are anchored on the product's start date, with the offsets running
- * forward. Counting a release backwards from the launch would be the more
- * natural shape, and the application supports it — but the date it would count
- * back from does not exist in the source. DEMO-148's due date is when the whole
- * initiative finishes, not when the version ships: anchoring on it put "war
- * rooms dos primeiros dias" 92 days before the launch and the adoption
- * dashboard 15 days before it. Naming a ship date the epic never states would
- * be inventing the one number the whole plan hangs from.
+ * The anchor differs per package, because the two plans are built from
+ * opposite ends:
+ *
+ *   Novo Produto — the product's start date, offsets forward. A product that
+ *     does not exist yet has no launch date to count back from.
+ *   Nova Release — the day the version goes live, offsets in both directions.
+ *     The epic's own due date is not that day (it is when the whole initiative
+ *     finishes, which put "war rooms dos primeiros dias" 92 days before the
+ *     launch), so the anchor is taken from the item that *is* the go-live: the
+ *     start of the rollout. That choice is named in `anchorIssueKey` rather
+ *     than left implicit, because it is the one date the whole plan hangs from.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -48,6 +51,11 @@ type Source = {
   description: string;
   targetPhase: schema.LifecyclePhase;
   anchor: "start_date" | "planned_launch_date";
+  /**
+   * The item whose start date is day zero. Only for launch-anchored packages,
+   * where the epic's own dates do not mark the go-live.
+   */
+  anchorIssueKey?: string;
 };
 
 const SOURCES: Source[] = [
@@ -63,9 +71,10 @@ const SOURCES: Source[] = [
     epicKey: "DEMO-148",
     packageName: "Nova Release",
     description:
-      "O ciclo de uma versão nova de um produto que já existe: documentação, habilitação, roadshow, rollout em ondas e desligamento da versão anterior. Derivado do lançamento do Forge (DEMO-148). As datas são contadas a partir da data de início.",
+      "O ciclo de uma versão nova de um produto que já existe: documentação, habilitação, roadshow, rollout em ondas e desligamento da versão anterior. Derivado do lançamento do Forge (DEMO-148). O dia zero é a subida da versão — o início do rollout em ondas: o que vem antes tem deslocamento negativo, o que vem depois, positivo.",
     targetPhase: "growth",
-    anchor: "start_date",
+    anchor: "planned_launch_date",
+    anchorIssueKey: "DEMO-211",
   },
 ];
 
@@ -160,11 +169,17 @@ export function buildPackagesFromRoadmap(): BuiltPackage[] {
     const epic = extract.issues.find((issue) => issue.key === source.epicKey);
     if (!epic) throw new Error(`épico ${source.epicKey} não está no extrato`);
 
-    // The date every offset is measured from: the start of the initiative for
-    // a forward plan, the launch for a backward one.
-    const anchorDate = source.anchor === "start_date" ? epic.startDate : epic.dueDate;
+    // The date every offset is measured from.
+    let anchorDate: string | null;
+    if (source.anchorIssueKey) {
+      const marker = extract.issues.find((issue) => issue.key === source.anchorIssueKey);
+      if (!marker) throw new Error(`item âncora ${source.anchorIssueKey} não está no extrato`);
+      anchorDate = marker.startDate;
+    } else {
+      anchorDate = source.anchor === "start_date" ? epic.startDate : epic.dueDate;
+    }
     if (!anchorDate) {
-      throw new Error(`épico ${source.epicKey} não tem a data âncora que o pacote precisa`);
+      throw new Error(`pacote "${source.packageName}" não tem a data âncora que precisa`);
     }
 
     const children = extract.issues
