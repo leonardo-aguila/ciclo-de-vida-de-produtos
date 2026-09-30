@@ -82,6 +82,42 @@ O seed é ancorado no mês atual, então continua atual por mais tempo que passe
 
 ---
 
+## Importar do Jira
+
+O portfólio pode ser populado a partir do quadro **Roadmap** do projeto `PRD — Produtos` (exemplo.atlassian.net), em vez dos dados demonstrativos:
+
+```bash
+npm run db:seed:jira
+```
+
+O comando **apaga os dados de produto** (produtos, tarefas, metas, finanças, planos, insights, comentários, decisões e snapshots) e reescreve a partir do extrato em `db/seed/jira-roadmap.json`. Configuração — enums, pacotes de tarefas, settings — e as contas de acesso permanecem.
+
+**Escopo:** exatamente o que o quadro mostra. O Roadmap tem filtro próprio, `labels IN (lancamento-2027, lancamento-2028)`, e são esses 108 itens que entram: 8 épicos de lançamento e os 100 itens sob eles.
+
+| No Jira | No portfólio |
+|---|---|
+| Épico de lançamento | **Produto** — nome do produto lançado; o épico e o link ficam na descrição |
+| Responsável do épico | Responsável do produto |
+| Data limite do épico | Lançamento previsto |
+| Status do épico | Fase (backlog → concepção, em progresso → desenvolvimento, concluído → lançamento) |
+| Etiquetas do épico | Tags |
+| História / Tarefa filha | **Tarefa**, com início, prazo, responsável e prioridade |
+| Status da tarefa | Coluna do Kanban (On Hold e Cancelled → Bloqueado) |
+
+O extrato é versionado junto com o código, então a importação é reproduzível sem acesso ao Jira e dá para comparar com o quadro linha a linha. Para atualizar, releia o quadro e regrave o arquivo.
+
+### O que o Jira não tem
+
+Receita, custo, meta, Business Plan. **Nada disso é inventado na importação** — e a consequência é visível de propósito: os oito produtos entram com o Health Score em "sem medição", o ROI em "sem custo" e a matriz de portfólio vazia, porque a matriz precisa de ROI para posicionar. Só os componentes de execução e risco têm insumo, e 30 dos 100 pontos de peso não sustentam um score.
+
+Para que o painel ganhe sentido financeiro, os lançamentos e as metas precisam ser cadastrados na própria aplicação. Preencher essas telas com números plausíveis deixaria o painel bonito e errado.
+
+### Responsáveis
+
+As pessoas que aparecem como responsáveis vêm do Jira e existem apenas como referência: entram **inativas**, com senha aleatória que ninguém possui, e não conseguem entrar no sistema. Criar login de colega com senha conhecida seria distribuir conta que ninguém pediu. Para usar a aplicação, entre como `admin`.
+
+---
+
 ## Comandos
 
 ```bash
@@ -99,7 +135,8 @@ npm run test:all          # os dois
 npm run db:setup          # uma vez: papel e bancos
 npm run db:generate       # gera migration SQL a partir de db/schema.ts
 npm run db:migrate        # aplica migrations + grants
-npm run db:seed           # popula (RESET_USERS=1 recria também os usuários)
+npm run db:seed           # popula com os dados demonstrativos (RESET_USERS=1 recria os usuários)
+npm run db:seed:jira      # limpa e popula a partir do quadro Roadmap do Jira
 npm run db:reset          # destrói e refaz tudo
 npm run db:recalc         # recalcula os snapshots de saúde (--backfill reconstrói o passado)
 ```

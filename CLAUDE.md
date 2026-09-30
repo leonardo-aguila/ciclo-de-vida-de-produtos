@@ -41,6 +41,7 @@ npm run db:setup      # uma vez: cria o papel portfolio_app e os bancos portfoli
 npm run db:generate   # gera nova migration SQL a partir de db/schema.ts
 npm run db:migrate    # aplica migrations + reaplica os grants do papel da aplicação
 npm run db:seed       # popula configurações, enums, usuários e dados demonstrativos
+npm run db:seed:jira  # limpa os dados de produto e importa o quadro Roadmap do Jira
 npm run db:reset      # derruba o schema, migra e semeia de novo (destrutivo)
 
 npm run dev           # sobe o banco se preciso e roda o Next em desenvolvimento
@@ -69,6 +70,8 @@ npm run test:all
 **Uma regra, um lugar.** Se duas telas precisam da mesma conta, a conta vai para `src/lib/engine/` e as duas a importam. Escrever a regra inline "só desta vez" já custou caro uma vez: o painel executivo tinha a própria versão da realização de meta, ignorava o período da meta e devolvia zero onde a página do produto devolvia nulo — o mesmo produto lia diferente dependendo de onde se olhava. A regra voltou para `engine/goals.ts`.
 
 **O que não pode ser medido devolve `null`, nunca zero.** Ausência de dado não é resultado ruim. Um produto sem nenhum mês de venda não atingiu 0% da meta: ele não tem meta medida. Isso vale em toda a cadeia — ROI sem custo, projeção sem receita, componente de saúde sem insumo, payback sem resultado recorrente positivo. Componente nulo sai da média com os pesos renormalizados, e quando sobra menos da metade do peso o Health Score inteiro passa a "sem medição" (`MIN_HEALTH_COVERAGE`). Um 100 construído sobre o único componente disponível é o número mais enganoso que o sistema poderia mostrar.
+
+**Importação não inventa dado.** O `db:seed:jira` traz produtos e tarefas do quadro Roadmap e para por aí: o Jira não guarda receita, custo, meta nem plano, então nada disso é escrito. Os produtos entram com a saúde em "sem medição" — e é essa a resposta certa. Uma importação que preenche o que falta com números plausíveis transforma o painel em ficção com aparência de relatório.
 
 **Toda recomendação carrega o racional e a evidência.** `Recommendation` devolve `rationale: string[]` e `evidence: {label, value}[]`, e a tela mostra os dois. Recomendação que ninguém pode contestar é recomendação que ninguém deveria obedecer — e nenhuma delas é executada pelo sistema: o usuário registra a decisão.
 
@@ -103,6 +106,8 @@ db/
   schema.ts          modelo de dados inteiro
   migrations/        SQL versionado gerado pelo drizzle-kit
   seed/              enums, usuários e dados demonstrativos
+    jira-roadmap.json  extrato do quadro Roadmap do Jira (versionado)
+    jira.ts            importa esse extrato para o modelo da aplicação
 scripts/
   ensure-db.sh       sobe o cluster se estiver parado (roda no predev)
   setup-db.sh        cria papel e bancos
