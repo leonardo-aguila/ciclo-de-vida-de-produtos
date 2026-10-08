@@ -44,6 +44,7 @@ npm run db:seed       # popula configurações, enums, usuários e dados demonst
 npm run db:seed:jira  # limpa os dados de produto e importa o quadro Roadmap do Jira
 npm run db:packages:jira  # deriva os pacotes "Novo Produto" e "Nova Release" dos épicos
 npm run db:seed:example   # um produto fictício com dados completos, para o painel ter o que mostrar
+npm run setup:pptx    # venv com python-pptx, exigida pela exportação de status em PowerPoint
 npm run db:reset      # derruba o schema, migra e semeia de novo (destrutivo)
 
 npm run dev           # sobe o banco se preciso e roda o Next em desenvolvimento
@@ -75,6 +76,8 @@ npm run test:all
 
 **Importação não inventa dado.** O `db:seed:jira` traz produtos e tarefas do quadro Roadmap e para por aí: o Jira não guarda receita, custo, meta nem plano, então nada disso é escrito. Os produtos entram com a saúde em "sem medição" — e é essa a resposta certa. Uma importação que preenche o que falta com números plausíveis transforma o painel em ficção com aparência de relatório.
 
+**O deck de status não é desenhado aqui.** A Nimbus tem um Master oficial e um gerador próprio, vendorizados em `vendor/nimbus-deck/`. A rota monta o spec `plano-entregas` e o Master desenha. Redesenhar o slide à mão sai parecido e errado — fonte, margem e paleta trocadas — e "parecido" é exatamente o que um padrão de marca existe para impedir. O gerador avisa (`AVISO:`) quando um texto estoura a caixa: **nenhum aviso é aceitável na entrega**, porque cada um deles é um pedaço de texto cortado no slide.
+
 **Uma exportação não pode discordar da tela.** A tabela de entregas, o PowerPoint e o status em texto saem todos de `engine/status-report.ts`, sobre as tarefas **filtradas na tela**. Exportar um recorte diferente do que o autor acabou de olhar é entregar um status que ninguém conferiu. O que o motor não sabe — o impacto de cada item, o porquê de ele importar — ele não escreve: sai um rascunho que diz, no rodapé, o que falta acrescentar.
 
 **Toda recomendação carrega o racional e a evidência.** `Recommendation` devolve `rationale: string[]` e `evidence: {label, value}[]`, e a tela mostra os dois. Recomendação que ninguém pode contestar é recomendação que ninguém deveria obedecer — e nenhuma delas é executada pelo sistema: o usuário registra a decisão.
@@ -100,6 +103,8 @@ Cada uma destas custou tempo; estão aqui para não custarem de novo.
 **Contraste de cor de status é requisito, não enfeite.** Verde e âmbar vivos reprovam em texto pequeno sobre branco (3,77:1 e 2,94:1). A paleta de `globals.css` e as cores de fase em `labels.ts` estão todas em 3:1 ou melhor — quando a informação está na cor, quem não enxerga a cor não recebe a informação.
 
 **`npm run build` com o `npm run dev` no ar corrompe o `.next`.** Os dois escrevem no mesmo diretório: o dev server passa a responder 500 com `Cannot find module './NNN.js'`, e o build falha em `Failed to collect page data`. Pare o dev server, `rm -rf .next` e rode de novo.
+
+**A contagem D é em dias úteis, e o D0 é uma tarefa.** "Faltam 3 dias" tem de querer dizer três dias de trabalho; num fim de semana a diferença entre dias úteis e corridos é a diferença entre chegar e não chegar. E o D0 sai da entrega que é o lançamento (`findLaunchTask`), não da data cadastrada no produto: o plano gira em torno do dia em que a coisa sobe, e esse dia é um card que alguém move no quadro. Feriados não entram — a aplicação não tem calendário deles, e inventar um nacional para uma empresa em vários estados erraria em silêncio. A nota de rodapé do slide diz isso.
 
 **Verificação no navegador exige aba nova.** As mensagens de console se acumulam por aba, e leitura de DOM por `javascript_tool` pega instantâneo velho. Clique de verdade e captura de tela são a checagem confiável.
 

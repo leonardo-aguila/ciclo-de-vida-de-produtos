@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addDaysToIso,
   addMonthsToCompetence,
+  businessDaysBetween,
   competenceRange,
   daysBetween,
   formatCompetence,
@@ -96,5 +97,36 @@ describe("moeda compacta", () => {
     expect(formatCurrencyCompact(null)).toBe("—");
     expect(formatCurrencyCompact(undefined)).toBe("—");
     expect(formatCurrencyCompact(Number.NaN)).toBe("—");
+  });
+});
+
+describe("dias úteis", () => {
+  it("não conta sábado nem domingo", () => {
+    // 2026-10-08 é quinta. Até sexta 09/10 é 1. Até segunda 12/10 são 2
+    // (sexta e segunda), e não 4: o fim de semana no meio não conta.
+    expect(businessDaysBetween("2026-10-08", "2026-10-09")).toBe(1);
+    expect(businessDaysBetween("2026-10-08", "2026-10-12")).toBe(2);
+    expect(businessDaysBetween("2026-10-08", "2026-10-13")).toBe(3);
+  });
+
+  it("conta uma semana cheia como cinco", () => {
+    expect(businessDaysBetween("2026-10-08", "2026-10-15")).toBe(5);
+  });
+
+  it("é simétrica e zero no mesmo dia", () => {
+    expect(businessDaysBetween("2026-10-15", "2026-10-08")).toBe(-5);
+    expect(businessDaysBetween("2026-10-08", "2026-10-08")).toBe(0);
+  });
+
+  it("ignora o fim de semana nas pontas", () => {
+    // Sexta 09/10 → sábado 10/10: nenhum dia útil decorrido.
+    expect(businessDaysBetween("2026-10-09", "2026-10-10")).toBe(0);
+    // Sábado 10/10 → segunda 12/10: só a segunda conta.
+    expect(businessDaysBetween("2026-10-10", "2026-10-12")).toBe(1);
+  });
+
+  it("atravessa o mês e o ano", () => {
+    // 31/12/2026 é quinta; 04/01/2027 é segunda.
+    expect(businessDaysBetween("2026-12-31", "2027-01-04")).toBe(2);
   });
 });

@@ -9,7 +9,12 @@
  * delivery is placed relative to it (D-52, D0, D+8). A product with no launch
  * date has no D — the functions say so instead of inventing a zero.
  */
-import { daysBetween, formatDate, formatDateShort } from "@/lib/format";
+import {
+  addDaysToIso,
+  businessDaysBetween,
+  formatDate,
+  formatDateShort,
+} from "@/lib/format";
 
 export type StatusKind = "done" | "doing" | "todo" | "overdue";
 
@@ -63,6 +68,8 @@ export type StatusReport = {
   productName: string;
   /** The launch date every offset is measured from. */
   d0: string | null;
+  /** The delivery that defines D0, when one of them does. */
+  d0TaskName: string | null;
   d0Label: string | null;
   /** Days from today to D0. Negative once the launch has passed. */
   daysToLaunch: number | null;
@@ -101,6 +108,33 @@ export function classify(
   if (task.dueDate !== null && task.dueDate < today) return "overdue";
   if (doingColumns.has(task.status)) return "doing";
   return "todo";
+}
+
+/**
+ * A tarefa que é o lançamento — o D0 do plano.
+ *
+ * O baralho de referência ancora em "evento de lançamento, DEMO-263", ou seja,
+ * numa entrega, não numa data cadastrada no produto. É a leitura certa: o
+ * plano gira em torno do dia em que a coisa sobe, e esse dia é uma tarefa que
+ * alguém move no quadro. A data de lançamento prevista do produto fica como
+ * alternativa, para quando nenhuma entrega se declara o evento.
+ */
+const LAUNCH_PATTERNS = [
+  /evento de lan[çc]amento/i,
+  /\bgo[-\s]?live\b/i,
+  /realizar lan[çc]amento/i,
+  /lan[çc]amento em produ[çc][ãa]o/i,
+];
+
+export function findLaunchTask<T extends { name: string; dueDate: string | null }>(
+  tasks: T[],
+): T | null {
+  const candidates = tasks.filter((task) => task.dueDate !== null);
+  for (const pattern of LAUNCH_PATTERNS) {
+    const match = candidates.find((task) => pattern.test(task.name));
+    if (match) return match;
+  }
+  return null;
 }
 
 /** "D-52", "D0", "D+8". */
@@ -209,7 +243,7 @@ function referenceOf(description: string | null): string | null {
 
 export function buildStatusReport(input: {
   productName: string;
-  /** The launch event: actual date if it happened, planned otherwise. */
+  /** Fallback anchor: used only when no delivery declares itself the launch. */
   launchDate: string | null;
   today: string;
   tasks: ReportTask[];
@@ -220,11 +254,16 @@ export function buildStatusReport(input: {
   const done = new Set(input.doneColumns);
   const doing = new Set(input.doingColumns);
 
+  const launchTask = findLaunchTask(input.tasks);
+  const d0 = launchTask?.dueDate ?? input.launchDate;
+
   const items: ReportItem[] = input.tasks
     .map((task) => {
       const kind = classify(task, done, doing, input.today);
-      const dOffset =
-        input.launchDate && task.dueDate ? daysBetween(input.launchDate, task.dueDate) : null;
+      // Dias úteis, não corridos: "faltam 3 dias" tem de querer dizer três
+      // dias de trabalho, senão um prazo numa segunda parece ter uma folga
+      // que o fim de semana já consumiu.
+      const dOffset = d0 && task.dueDate ? businessDaysBetween(d0, task.dueDate) : null;
       return {
         id: task.id,
         name: deliveryName(task.name),
@@ -257,14 +296,15 @@ export function buildStatusReport(input: {
     overdue: items.filter((item) => item.kind === "overdue").length,
   };
 
-  const daysToLaunch = input.launchDate ? daysBetween(input.today, input.launchDate) : null;
+  const daysToLaunch = d0 ? businessDaysBetween(input.today, d0) : null;
 
-  const headline = buildHeadline(input.productName, counts, input.launchDate, daysToLaunch);
+  const headline = buildHeadline(input.productName, counts, d0, daysToLaunch);
 
   return {
     productName: input.productName,
-    d0: input.launchDate,
-    d0Label: input.launchDate ? formatDateShort(input.launchDate) : null,
+    d0,
+    d0TaskName: launchTask ? deliveryName(launchTask.name) : null,
+    d0Label: d0 ? formatDateShort(d0) : null,
     daysToLaunch,
     counts,
     buckets: bucketize(items, input.perBucket ?? 6),
@@ -297,8 +337,8 @@ function buildHeadline(
   if (launchDate && daysToLaunch !== null) {
     parts.push(
       daysToLaunch >= 0
-        ? `evento em ${formatDateShort(launchDate)} (faltam ${daysToLaunch} dias)`
-        : `evento em ${formatDateShort(launchDate)} (há ${Math.abs(daysToLaunch)} dias)`,
+        ? `evento em ${formatDateShort(launchDate)} (faltam ${daysToLaunch} dias úteis)`
+        : `evento em ${formatDateShort(launchDate)} (há ${Math.abs(daysToLaunch)} dias úteis)`,
     );
   }
   return parts.join("; ");
@@ -316,8 +356,8 @@ export function countsLine(report: StatusReport): string {
   if (report.d0Label && report.daysToLaunch !== null) {
     parts.push(
       report.daysToLaunch >= 0
-        ? `evento em ${report.d0Label} (faltam ${report.daysToLaunch} dias)`
-        : `evento em ${report.d0Label} (há ${Math.abs(report.daysToLaunch)} dias)`,
+        ? `evento em ${report.d0Label} (faltam ${report.daysToLaunch} dias úteis)`
+        : `evento em ${report.d0Label} (há ${Math.abs(report.daysToLaunch)} dias úteis)`,
     );
   }
   return parts.join("  ·  ");
@@ -327,86 +367,209 @@ export function countsLine(report: StatusReport): string {
 /* Written update                                                             */
 /* -------------------------------------------------------------------------- */
 
+/* -------------------------------------------------------------------------- */
+/* Deck                                                                       */
+/* -------------------------------------------------------------------------- */
+
+export type DeckEntrega = {
+  marco: string;
+  data: string;
+  texto: string;
+  status: "concluida" | "em-curso" | "a-iniciar" | "atrasada";
+  dono: string;
+  chave?: string;
+};
+
+export type DeckColumn = {
+  periodo: string;
+  nome: string;
+  entregas: DeckEntrega[];
+  destaque?: boolean;
+};
+
 /**
- * The Rolling Status Update, as text.
+ * O texto que cabe num card do Master: duas linhas, cerca de 45 caracteres
+ * com seis colunas.
  *
- * It generates what the data knows: how long to the launch, what closed, what
- * is open grouped by deadline, who owns each item and what is late. It does
- * NOT write the "Impacto:" lines of the reference message — those are the
- * author's reading of why an item matters, and a generated sentence there
- * would be a confident guess in a message people act on. The closing note says
- * so, so nobody sends the draft believing it is complete.
+ * Primeiro tira o marcador de fase, que já é o nome da coluna e repetiria em
+ * todo card. Só então corta, e corta em palavra inteira. O nome completo
+ * continua na tabela e no status em texto — o card é a vitrine, não o
+ * registro.
+ */
+export function deckText(name: string, limit = 45): string {
+  const withoutPhase = name.replace(/^F\d\s*·\s*/, "");
+  if (withoutPhase.length <= limit + 1) return withoutPhase;
+  const cut = withoutPhase.slice(0, limit);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > limit * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
+}
+
+const DECK_STATUS: Record<StatusKind, DeckEntrega["status"]> = {
+  done: "concluida",
+  doing: "em-curso",
+  todo: "a-iniciar",
+  overdue: "atrasada",
+};
+
+/** Limits of the Master's grid: six columns of six cards per slide. */
+const DECK = { columnsPerSlide: 6, cardsPerColumn: 6 };
+
+/**
+ * Names a column by where it sits around the launch, not by a theme.
+ *
+ * The reference deck titles its columns editorially ("Oferta, preço e riscos").
+ * Nothing in the data says what a window is about, so the name states the only
+ * thing that is true of every card in it: which side of the launch it falls on.
+ * When the deliveries carry the team's own phase marker (F1…F4), that is a
+ * better name and it wins.
+ */
+function columnName(items: ReportItem[]): string {
+  const phases = new Set(
+    items.map((item) => /^(F\d)\s*·/.exec(item.name)?.[1]).filter(Boolean) as string[],
+  );
+  if (phases.size === 1) return `Fase ${[...phases][0]!.slice(1)}`;
+
+  const offsets = items.map((item) => item.dOffset).filter((o): o is number => o !== null);
+  if (offsets.length === 0) return "Sem prazo";
+  if (offsets.every((o) => o === 0)) return "Evento de lançamento";
+  if (offsets.every((o) => o < 0)) return "Preparação";
+  if (offsets.every((o) => o > 0)) return "Pós-lançamento";
+  // "Transição do lançamento" estoura a linha do cabeçalho no Master.
+  return "Lançamento";
+}
+
+/**
+ * The report's buckets as deck columns, paginated to the Master's grid.
+ *
+ * Returns one array of columns per slide. Nothing is dropped: a plan with
+ * fifty deliveries becomes two slides rather than a slide missing twenty of
+ * them, because the deliveries that fall off the end are the late ones.
+ */
+export function buildDeckColumns(report: StatusReport): DeckColumn[][] {
+  const columns: DeckColumn[] = [];
+
+  for (const bucket of report.buckets) {
+    // A bucket above the card limit is split rather than overflowed.
+    for (let start = 0; start < bucket.items.length; start += DECK.cardsPerColumn) {
+      const slice = bucket.items.slice(start, start + DECK.cardsPerColumn);
+      const atLaunch = slice.every((item) => item.dOffset === 0);
+      columns.push({
+        periodo: bucket.label,
+        nome: columnName(slice),
+        destaque: atLaunch || undefined,
+        entregas: slice.map((item) => ({
+          marco: item.dLabel ?? "—",
+          data: item.dueLabel,
+          texto: deckText(item.name),
+          status: DECK_STATUS[item.kind],
+          dono: item.deckOwnerLabel,
+          ...(item.reference ? { chave: item.reference } : {}),
+        })),
+      });
+    }
+  }
+
+  const pages: DeckColumn[][] = [];
+  for (let index = 0; index < columns.length; index += DECK.columnsPerSlide) {
+    pages.push(columns.slice(index, index + DECK.columnsPerSlide));
+  }
+  return pages.length > 0 ? pages : [[]];
+}
+
+/** Domingo que fecha a semana da data, para "esta e a próxima semana". */
+function endOfNextWeek(today: string): string {
+  const weekday = new Date(`${today}T00:00:00`).getDay();
+  // getDay(): 0 = domingo. Faltam (7 - dia) % 7 dias até o próximo domingo.
+  const toSunday = (7 - weekday) % 7;
+  return addDaysToIso(today, toSunday + 7);
+}
+
+/** Uma linha de item: o que é, para quando e de quem. */
+function line(item: ReportItem): string {
+  const prazo = item.dueDate
+    ? `${formatDate(item.dueDate)}${item.dLabel ? ` (${item.dLabel})` : ""}`
+    : "sem prazo";
+  return `• ${item.name} — ${prazo} — ${item.ownerLabel}`;
+}
+
+/**
+ * O status escrito, em três blocos.
+ *
+ * Em andamento, atrasadas e as prioridades das próximas duas semanas — cada
+ * item com prazo e responsável, que é o que um status precisa para alguém
+ * agir. O que já fechou não entra: ninguém age sobre o que está pronto, e uma
+ * lista de vinte concluídas enterra as três que travam o lançamento.
+ *
+ * O "por que isto importa" de cada item continua de fora. É leitura de quem
+ * assina, e uma frase gerada ali seria um palpite confiante numa mensagem
+ * sobre a qual as pessoas tomam decisão.
  */
 export function buildWrittenUpdate(report: StatusReport, today: string): string {
   const lines: string[] = ["Prezados, boa tarde.", ""];
 
-  if (report.d0Label && report.daysToLaunch !== null && report.daysToLaunch >= 0) {
+  if (report.d0Label && report.daysToLaunch !== null && report.daysToLaunch > 0) {
     lines.push(
-      `Faltam ${report.daysToLaunch} dias para o evento de lançamento do ${report.productName} (${report.d0Label}). ` +
-        "Segue o status desta semana, com os pontos que exigem ação dos responsáveis.",
+      `Faltam ${report.daysToLaunch} dias úteis para o lançamento do ${report.productName} ` +
+        `(${report.d0Label}). Segue o status das entregas.`,
     );
   } else if (report.d0Label && report.daysToLaunch !== null) {
     lines.push(
-      `O lançamento do ${report.productName} foi em ${report.d0Label}, há ${Math.abs(report.daysToLaunch)} dias. ` +
-        "Segue o status desta semana.",
+      `O lançamento do ${report.productName} foi em ${report.d0Label}. Segue o status das entregas.`,
     );
   } else {
     lines.push(
       `Segue o status das entregas do ${report.productName}. ` +
-        "O produto ainda não tem data de lançamento definida, então as entregas estão listadas por prazo.",
+        "Nenhuma entrega está marcada como o evento de lançamento, então não há contagem regressiva.",
     );
   }
   lines.push("");
 
-  const concluded = report.items.filter((item) => item.kind === "done");
-  if (concluded.length > 0) {
-    lines.push(`TÓPICO — Decisões & Avanços (${concluded.length} de ${report.counts.total})`);
-    for (const item of concluded) {
-      lines.push(`• ${item.name}${item.ownerLabel !== "—" ? ` — ${item.ownerLabel}` : ""}`);
-    }
-    lines.push("");
+  const emAndamento = report.items.filter((item) => item.kind === "doing");
+  const atrasadas = report.items.filter((item) => item.kind === "overdue");
+
+  const limite = endOfNextWeek(today);
+  const prioridades = report.items.filter(
+    (item) =>
+      item.kind !== "done" &&
+      item.kind !== "overdue" &&
+      item.dueDate !== null &&
+      item.dueDate >= today &&
+      item.dueDate <= limite,
+  );
+
+  lines.push(`ATRASADAS (${atrasadas.length})`);
+  if (atrasadas.length === 0) {
+    lines.push("• Nenhuma entrega com prazo vencido.");
+  } else {
+    for (const item of atrasadas) lines.push(line(item));
   }
+  lines.push("");
 
-  const open = report.items.filter((item) => item.kind !== "done");
-  if (open.length > 0) {
-    lines.push("TÓPICO — Caminho Crítico");
-    lines.push("");
-
-    // Grouped by deadline, which is the order the reader acts in.
-    const byDue = new Map<string, ReportItem[]>();
-    for (const item of open) {
-      const key = item.dueDate ?? "sem-prazo";
-      byDue.set(key, [...(byDue.get(key) ?? []), item]);
-    }
-
-    let index = 1;
-    for (const [key, group] of byDue) {
-      const header =
-        key === "sem-prazo"
-          ? "Sem prazo definido"
-          : `Prazo ${formatDate(key)}${group[0]!.dLabel ? ` (${group[0]!.dLabel})` : ""}` +
-            (key < today ? " — VENCIDO" : "");
-      lines.push(`${index}. ${header}`);
-      for (const item of group) {
-        const owner = item.ownerLabel !== "—" ? ` | Responsável: ${item.ownerLabel}` : "";
-        lines.push(`   · ${item.name}${owner} | ${item.statusLabel.toUpperCase()}`);
-      }
-      lines.push("");
-      index += 1;
-    }
+  lines.push(`EM ANDAMENTO (${emAndamento.length})`);
+  if (emAndamento.length === 0) {
+    lines.push("• Nenhuma entrega em andamento.");
+  } else {
+    for (const item of emAndamento) lines.push(line(item));
   }
+  lines.push("");
 
-  const nextDeadline = open.find((item) => item.dueDate !== null && item.dueDate >= today);
+  lines.push(`PRIORIDADES — entregas até ${formatDate(limite)} (${prioridades.length})`);
+  if (prioridades.length === 0) {
+    lines.push("• Nenhuma entrega vence nesta nem na próxima semana.");
+  } else {
+    for (const item of prioridades) lines.push(line(item));
+  }
+  lines.push("");
+
   lines.push(
-    "Ação solicitada: peço que cada responsável dos itens em aberto confirme o prazo, " +
-      `ou sinalize um bloqueio${nextDeadline?.dueDate ? `, até ${formatDate(nextDeadline.dueDate)}` : ""}.`,
+    "Ação solicitada: peço que cada responsável confirme o prazo dos itens acima, ou sinalize um bloqueio.",
   );
   lines.push("");
   lines.push("Fico à disposição para detalhar qualquer ponto.");
   lines.push("");
   lines.push(
-    "— Rascunho gerado a partir das entregas cadastradas. Acrescente o impacto de cada " +
-      "item antes de enviar: por que ele importa é leitura sua, não do sistema.",
+    "— Rascunho gerado a partir das entregas cadastradas; prazos em dias úteis. " +
+      "Acrescente o impacto de cada item antes de enviar: por que ele importa é leitura sua.",
   );
 
   return lines.join("\n");

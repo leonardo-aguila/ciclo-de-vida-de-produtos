@@ -220,6 +220,34 @@ export function daysBetween(a: string, b: string): number {
 }
 
 /** Whole months between two competences (b - a). */
+/**
+ * Dias **úteis** entre duas datas, com sinal — segunda a sexta, sem feriado.
+ *
+ * Conta o intervalo aberto na origem e fechado no destino: de sexta para a
+ * segunda seguinte é 1, não 3. É assim que um plano de lançamento é lido —
+ * "faltam 5 dias" significa cinco dias de trabalho, não cinco folhas do
+ * calendário, e num fim de semana a diferença entre as duas leituras é a
+ * diferença entre chegar e não chegar.
+ *
+ * Feriados não entram: a aplicação não tem calendário de feriados, e inventar
+ * um calendário nacional para uma empresa que opera em vários estados erraria
+ * em silêncio. Está documentado na nota de rodapé do slide.
+ */
+export function businessDaysBetween(from: string, to: string): number {
+  if (from === to) return 0;
+  const forward = from < to;
+  const [start, end] = forward ? [from, to] : [to, from];
+
+  let count = 0;
+  let cursor = addDaysToIso(start, 1);
+  while (cursor <= end) {
+    const weekday = new Date(`${cursor}T00:00:00`).getDay();
+    if (weekday !== 0 && weekday !== 6) count += 1;
+    cursor = addDaysToIso(cursor, 1);
+  }
+  return forward ? count : -count;
+}
+
 export function monthsBetween(a: string, b: string): number {
   const pa = a.slice(0, 10).split("-").map(Number);
   const pb = b.slice(0, 10).split("-").map(Number);

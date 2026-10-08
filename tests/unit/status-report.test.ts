@@ -75,7 +75,9 @@ describe("rótulo D", () => {
       task({ id: "b", name: "Evento", dueDate: LAUNCH }),
       task({ id: "c", name: "Plantão", dueDate: "2026-11-12" }),
     ]);
-    expect(r.items.map((i) => i.dLabel)).toEqual(["D-52", "D0", "D+8"]);
+    // Dias úteis: 13/09 a 04/11 são 38 dias de trabalho (52 corridos), e
+    // 04/11 a 12/11 são 6 (8 corridos).
+    expect(r.items.map((i) => i.dLabel)).toEqual(["D-38", "D0", "D+6"]);
   });
 
   it("devolve nulo quando o produto não tem data de lançamento", () => {
@@ -104,12 +106,12 @@ describe("contagens e manchete", () => {
   it("põe o vencido na manchete quando existe", () => {
     expect(r.headline).toContain("1 de 4 entregas concluídas");
     expect(r.headline).toContain("1 vencida");
-    expect(r.headline).toContain("faltam 27 dias");
+    expect(r.headline).toContain("faltam 19 dias úteis");
   });
 
   it("monta a linha de contagens na ordem do baralho de referência", () => {
     expect(countsLine(r)).toBe(
-      "4 entregas  ·  1 concluídas  ·  1 em curso  ·  1 a iniciar  ·  1 vencidas  ·  evento em 04/11 (faltam 27 dias)",
+      "4 entregas  ·  1 concluídas  ·  1 em curso  ·  1 a iniciar  ·  1 vencidas  ·  evento em 04/11 (faltam 19 dias úteis)",
     );
   });
 
@@ -233,45 +235,114 @@ describe("responsável e área", () => {
   });
 });
 
+describe("D0 na tarefa de lançamento", () => {
+  it("ancora na entrega que é o evento, não na data do produto", () => {
+    const r = buildStatusReport({
+      productName: "Astro",
+      // A data cadastrada no produto é outra de propósito: quem manda é a tarefa.
+      launchDate: "2026-12-31",
+      today: TODAY,
+      tasks: [
+        task({ id: "1", name: "F4 · Realizar evento de Lançamento", dueDate: "2026-11-04" }),
+        task({ id: "2", name: "F1 · Criar tese", dueDate: "2026-11-03" }),
+      ],
+      doneColumns: DONE,
+      doingColumns: DOING,
+    });
+    expect(r.d0).toBe("2026-11-04");
+    expect(r.d0TaskName).toBe("F4 · Realizar evento de Lançamento");
+    // 03/11 é a terça anterior ao evento na quarta: um dia útil antes.
+    expect(r.items.find((i) => i.id === "2")!.dLabel).toBe("D-1");
+    expect(r.items.find((i) => i.id === "1")!.dLabel).toBe("D0");
+  });
+
+  it("cai para a data do produto quando nenhuma entrega é o lançamento", () => {
+    const r = report([task({ id: "1", name: "F1 · Criar tese", dueDate: "2026-11-03" })]);
+    expect(r.d0).toBe(LAUNCH);
+    expect(r.d0TaskName).toBeNull();
+  });
+
+  it("reconhece go-live além de evento de lançamento", () => {
+    const r = buildStatusReport({
+      productName: "X", launchDate: null, today: TODAY,
+      tasks: [task({ id: "1", name: "Go-live em produção", dueDate: "2026-11-04" })],
+      doneColumns: DONE, doingColumns: DOING,
+    });
+    expect(r.d0).toBe("2026-11-04");
+  });
+
+  it("conta a distância em dias úteis", () => {
+    // 08/10 quinta → 04/11 quarta: 19 dias úteis, 27 corridos.
+    const r = report([task({ id: "1", name: "A", dueDate: LAUNCH })]);
+    expect(r.daysToLaunch).toBe(19);
+    expect(countsLine(r)).toContain("faltam 19 dias úteis");
+  });
+});
+
 describe("status escrito", () => {
   const r = report([
-    task({ id: "1", name: "Criar tese de uma página", status: "done", dueDate: "2026-09-13",
+    task({ id: "1", name: "Feita", status: "done", dueDate: "2026-09-13",
       assigneeName: "Marina", categoryLabel: "Produto" }),
-    task({ id: "2", name: "Validar BP do produto", status: "doing", dueDate: "2026-10-11",
+    task({ id: "2", name: "Validar BP", status: "doing", dueDate: "2026-10-20",
       assigneeName: "Adriana", categoryLabel: "Finanças" }),
-    task({ id: "3", name: "Cadastrar proposta e SKU", status: "backlog", dueDate: "2026-10-01",
+    task({ id: "3", name: "Cadastrar SKU", status: "backlog", dueDate: "2026-10-01",
       assigneeName: "Severino", categoryLabel: "Sales Ops" }),
+    task({ id: "4", name: "Sales kit", status: "backlog", dueDate: "2026-10-13",
+      assigneeName: "Felipe", categoryLabel: "Marketing" }),
+    task({ id: "5", name: "Treinamento", status: "backlog", dueDate: "2026-11-30",
+      assigneeName: "Inayan", categoryLabel: "Produto" }),
   ]);
   const texto = buildWrittenUpdate(r, TODAY);
 
-  it("abre com a contagem regressiva do lançamento", () => {
-    expect(texto).toContain("Faltam 27 dias para o evento de lançamento do Nimbus Astro (04/11)");
+  it("abre com a contagem regressiva em dias úteis", () => {
+    expect(texto).toContain("Faltam 19 dias úteis para o lançamento do Nimbus Astro (04/11)");
   });
 
-  it("lista o concluído em Decisões & Avanços, com o dono", () => {
-    expect(texto).toContain("TÓPICO — Decisões & Avanços (1 de 3)");
-    expect(texto).toContain("Criar tese de uma página — Marina · Produto");
+  it("tem os três blocos pedidos, nessa ordem", () => {
+    const ordem = ["ATRASADAS (1)", "EM ANDAMENTO (1)", "PRIORIDADES"];
+    let cursor = -1;
+    for (const bloco of ordem) {
+      const pos = texto.indexOf(bloco);
+      expect(pos).toBeGreaterThan(cursor);
+      cursor = pos;
+    }
   });
 
-  it("agrupa o aberto por prazo e marca o vencido", () => {
-    expect(texto).toContain("TÓPICO — Caminho Crítico");
-    expect(texto).toContain("Prazo 01/10/2026 (D-34) — VENCIDO");
-    expect(texto).toContain("Responsável: Severino · Sales Ops | VENCIDA");
-    expect(texto).toContain("Prazo 11/10/2026 (D-24)");
+  it("dá prazo e responsável em cada linha", () => {
+    expect(texto).toContain("• Cadastrar SKU — 01/10/2026 (D-24) — Severino · Sales Ops");
+    expect(texto).toContain("• Validar BP — 20/10/2026 (D-11) — Adriana · Finanças");
+  });
+
+  it("limita as prioridades a esta e à próxima semana", () => {
+    // Hoje é quinta 08/10; a janela fecha no domingo 18/10.
+    expect(texto).toContain("PRIORIDADES — entregas até 18/10/2026 (1)");
+    expect(texto).toContain("• Sales kit — 13/10/2026");
+    // 30/11 está fora da janela; 01/10 já venceu e está em ATRASADAS.
+    expect(texto).not.toContain("Treinamento — 30/11");
+  });
+
+  it("não lista o que já foi concluído", () => {
+    // Ninguém age sobre o que está pronto.
+    expect(texto).not.toContain("Feita");
+  });
+
+  it("diz explicitamente quando um bloco está vazio", () => {
+    const limpo = buildWrittenUpdate(
+      report([task({ id: "1", name: "A", status: "done", dueDate: "2026-09-13" })]),
+      TODAY,
+    );
+    expect(limpo).toContain("Nenhuma entrega com prazo vencido.");
+    expect(limpo).toContain("Nenhuma entrega em andamento.");
+    expect(limpo).toContain("Nenhuma entrega vence nesta nem na próxima semana.");
   });
 
   it("não inventa a linha de impacto", () => {
-    // O "por que isto importa" é leitura de quem escreve, não do sistema.
     expect(texto).not.toMatch(/^Impacto:/m);
-    expect(texto).toContain("Acrescente o impacto de cada item antes de enviar");
+    expect(texto).toContain("por que ele importa é leitura sua");
   });
 
-  it("pede confirmação até o próximo prazo em aberto", () => {
-    expect(texto).toContain("confirme o prazo, ou sinalize um bloqueio, até 11/10/2026");
-  });
-
-  it("explica a ausência de data de lançamento em vez de omiti-la", () => {
+  it("explica a falta de âncora em vez de omiti-la", () => {
     const sem = buildWrittenUpdate(report([task({ id: "1", name: "X" })], null), TODAY);
-    expect(sem).toContain("ainda não tem data de lançamento definida");
+    expect(sem).toContain("Nenhuma entrega está marcada como o evento de lançamento");
   });
 });
