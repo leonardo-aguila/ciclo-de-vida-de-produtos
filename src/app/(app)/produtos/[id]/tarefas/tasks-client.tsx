@@ -1,6 +1,6 @@
 "use client";
 
-import { GanttChartSquare, KanbanSquare, Plus, X } from "lucide-react";
+import { GanttChartSquare, KanbanSquare, Plus, Table2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { moveTaskAction, rescheduleTaskAction } from "@/app/actions/tasks";
@@ -14,8 +14,11 @@ import { formatPercent, todayIso } from "@/lib/format";
 import { PRIORITY_LABELS } from "@/lib/labels";
 import type { TaskRow } from "@/lib/queries/tasks";
 import { cn } from "@/lib/utils";
+import { buildStatusReport } from "@/lib/engine/status-report";
 import { GanttChart, type GroupBy, type Zoom } from "./gantt-chart";
 import { KanbanBoard, type Column } from "./kanban-board";
+import { StatusExport } from "./status-export";
+import { TasksTable } from "./tasks-table";
 import { TaskDialog } from "./task-dialog";
 
 type Option = { id: string; label: string };
@@ -29,6 +32,7 @@ type Option = { id: string; label: string };
  */
 export function TasksClient({
   productId,
+  productName,
   tasks: initial,
   columns,
   categories,
@@ -39,6 +43,7 @@ export function TasksClient({
   currentUserId,
 }: {
   productId: string;
+  productName: string;
   tasks: TaskRow[];
   columns: Column[];
   categories: Option[];
@@ -50,7 +55,7 @@ export function TasksClient({
 }) {
   const router = useRouter();
   const [tasks, setTasks] = React.useState(initial);
-  const [view, setView] = React.useState<"kanban" | "gantt">("kanban");
+  const [view, setView] = React.useState<"kanban" | "gantt" | "tabela">("kanban");
   const [zoom, setZoom] = React.useState<Zoom>("week");
   const [groupBy, setGroupBy] = React.useState<GroupBy>("none");
   const [error, setError] = React.useState<string | null>(null);
@@ -82,6 +87,42 @@ export function TasksClient({
         return true;
       }),
     [tasks, filters, today],
+  );
+
+  // O mesmo relatório alimenta a tabela, o PowerPoint e o texto. Ele segue os
+  // filtros da tela: exportar um recorte diferente do que está à vista seria
+  // entregar um status que ninguém conferiu.
+  const doneColumns = React.useMemo(
+    () => columns.filter((column) => column.isDone).map((column) => column.code),
+    [columns],
+  );
+  const doingColumns = React.useMemo(
+    () =>
+      columns
+        .filter((column) => !column.isDone && !["backlog", "todo"].includes(column.code))
+        .map((column) => column.code),
+    [columns],
+  );
+
+  const report = React.useMemo(
+    () =>
+      buildStatusReport({
+        productName,
+        launchDate,
+        today,
+        tasks: visible.map((task) => ({
+          id: task.id,
+          name: task.name,
+          assigneeName: task.assigneeName,
+          categoryLabel: task.categoryLabel,
+          dueDate: task.dueDate,
+          status: task.status,
+          description: task.description,
+        })),
+        doneColumns,
+        doingColumns,
+      }),
+    [productName, launchDate, today, visible, doneColumns, doingColumns],
   );
 
   /** Applies the change locally, then asks the server; reverts on refusal. */
@@ -188,6 +229,18 @@ export function TasksClient({
                 <GanttChartSquare className="h-3.5 w-3.5" />
                 Gantt
               </button>
+              <button
+                type="button"
+                aria-pressed={view === "tabela"}
+                onClick={() => setView("tabela")}
+                className={cn(
+                  "flex items-center gap-1.5 rounded px-2.5 py-1 text-xs",
+                  view === "tabela" ? "bg-brand text-brand-fg" : "text-fg-muted hover:text-fg",
+                )}
+              >
+                <Table2 className="h-3.5 w-3.5" />
+                Tabela
+              </button>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 text-xs text-fg-muted">
@@ -201,6 +254,7 @@ export function TasksClient({
                   {lateCount} {lateCount === 1 ? "atrasada" : "atrasadas"}
                 </Badge>
               ) : null}
+              <StatusExport productId={productId} report={report} today={today} />
               {canManage ? (
                 <Button
                   size="sm"
@@ -360,6 +414,12 @@ export function TasksClient({
             title="Nenhuma tarefa com esses filtros"
             description="Ajuste ou limpe os filtros para ver o quadro inteiro."
           />
+        </Card>
+      ) : view === "tabela" ? (
+        <Card>
+          <CardBody>
+            <TasksTable items={report.items} />
+          </CardBody>
         </Card>
       ) : view === "kanban" ? (
         <KanbanBoard

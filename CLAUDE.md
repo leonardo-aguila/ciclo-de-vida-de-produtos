@@ -75,6 +75,8 @@ npm run test:all
 
 **Importação não inventa dado.** O `db:seed:jira` traz produtos e tarefas do quadro Roadmap e para por aí: o Jira não guarda receita, custo, meta nem plano, então nada disso é escrito. Os produtos entram com a saúde em "sem medição" — e é essa a resposta certa. Uma importação que preenche o que falta com números plausíveis transforma o painel em ficção com aparência de relatório.
 
+**Uma exportação não pode discordar da tela.** A tabela de entregas, o PowerPoint e o status em texto saem todos de `engine/status-report.ts`, sobre as tarefas **filtradas na tela**. Exportar um recorte diferente do que o autor acabou de olhar é entregar um status que ninguém conferiu. O que o motor não sabe — o impacto de cada item, o porquê de ele importar — ele não escreve: sai um rascunho que diz, no rodapé, o que falta acrescentar.
+
 **Toda recomendação carrega o racional e a evidência.** `Recommendation` devolve `rationale: string[]` e `evidence: {label, value}[]`, e a tela mostra os dois. Recomendação que ninguém pode contestar é recomendação que ninguém deveria obedecer — e nenhuma delas é executada pelo sistema: o usuário registra a decisão.
 
 ## Armadilhas já encontradas

@@ -86,6 +86,14 @@ export function formatDate(value: string | Date | null | undefined): string {
 }
 
 /** 15/03/2024 14:32 */
+/** 13/09 — dia e mês, para cartões e cabeçalhos onde o ano é redundante. */
+export function formatDateShort(value: string | null | undefined): string {
+  if (!value) return "—";
+  const [, month, day] = value.split("-");
+  if (!month || !day) return "—";
+  return `${day}/${month}`;
+}
+
 export function formatDateTime(value: string | Date | null | undefined): string {
   if (!value) return "—";
   const date = typeof value === "string" ? new Date(value) : value;

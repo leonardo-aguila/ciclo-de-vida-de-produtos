@@ -44,6 +44,7 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
 
       <TasksClient
         productId={product.id}
+        productName={product.name}
         tasks={tasks}
         columns={columnValues.map((column) => ({
           code: column.code,
@@ -53,7 +54,8 @@ export default async function TasksPage({ params }: { params: Promise<{ id: stri
         }))}
         categories={categories.map((category) => ({ id: category.id, label: category.label }))}
         assignees={people.map((person) => ({ id: person.id, label: person.name }))}
-        launchDate={product.plannedLaunchDate}
+        // O D0 do status é o lançamento que aconteceu, quando aconteceu.
+        launchDate={product.actualLaunchDate ?? product.plannedLaunchDate}
         canEdit={canEdit}
         canManage={canManage}
         currentUserId={user.id}

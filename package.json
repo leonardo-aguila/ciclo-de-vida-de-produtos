@@ -50,6 +50,7 @@
     "next": "^15.1.4",
     "papaparse": "^5.4.1",
     "postgres": "^3.4.5",
+    "pptxgenjs": "^4.0.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.15.0",

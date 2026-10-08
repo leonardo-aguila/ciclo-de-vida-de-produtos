@@ -31,6 +31,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { eq, inArray } from "drizzle-orm";
 import type { drizzle } from "drizzle-orm/postgres-js";
+import { deliveryName } from "../../src/lib/engine/status-report";
 import { daysBetween } from "../../src/lib/format";
 import * as schema from "../schema";
 
@@ -86,10 +87,10 @@ const SOURCES: Source[] = [
  * Drops the product prefix the Jira items carry — "[Astra 2027 · Pocket] F1 ·
  * Definir pricing" becomes "F1 · Definir pricing". A template that still names
  * the product it came from is a template nobody reuses.
+ *
+ * Shared with the status report, which needs the same short name on a card.
  */
-function templateName(summary: string): string {
-  return summary.replace(/^\s*\[[^\]]*\]\s*/, "").replace(/\s+/g, " ").trim();
-}
+const templateName = deliveryName;
 
 /** The F1..F4 phase marker the team writes into every item name. */
 function phaseOf(name: string): string | null {
