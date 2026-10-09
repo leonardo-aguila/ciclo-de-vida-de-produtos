@@ -126,8 +126,8 @@ export function InsightsClient({
 
         <Card>
           <CardHeader
-            title="Insights"
-            description="Ordenados por score — impacto dividido por esforço."
+            title="Backlog priorizado"
+            description="Ordenado por score — impacto dividido por esforço."
             action={
               canEdit ? (
                 <Button

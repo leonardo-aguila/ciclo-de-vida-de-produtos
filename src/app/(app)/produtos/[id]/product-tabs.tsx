@@ -6,7 +6,9 @@ import { cn } from "@/lib/utils";
 
 const TABS = [
   { slug: "visao-geral", label: "Visão geral" },
-  { slug: "insights", label: "Insights" },
+  // A rota continua /insights: renomear a URL quebraria links já
+  // compartilhados, e o nome da aba é o que o usuário lê.
+  { slug: "insights", label: "Backlog" },
   { slug: "financeiro", label: "Financeiro" },
   { slug: "tarefas", label: "Tarefas" },
   { slug: "business-plan", label: "Business Plan" },
