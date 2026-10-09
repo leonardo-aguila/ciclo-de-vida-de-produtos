@@ -99,8 +99,8 @@ export function EffortImpactMatrix({
   if (insights.length === 0) {
     return (
       <EmptyState
-        title="Nenhum insight na matriz"
-        description="Cadastre insights com esforço e impacto de 1 a 10 para priorizá-los visualmente."
+        title="Nenhum item na matriz"
+        description="Cadastre itens com esforço e impacto de 1 a 10 para priorizá-los visualmente."
       />
     );
   }
@@ -115,7 +115,7 @@ export function EffortImpactMatrix({
         viewBox={`0 0 ${SIZE} ${SIZE}`}
         className="w-full max-w-xl touch-none select-none"
         role="img"
-        aria-label={`Matriz de esforço por impacto com ${insights.length} insights`}
+        aria-label={`Matriz de esforço por impacto com ${insights.length} itens do backlog`}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerLeave={endDrag}
@@ -289,7 +289,7 @@ export function EffortImpactMatrix({
 
       {canEdit ? (
         <p className="text-[11px] text-fg-muted">
-          Clique num ponto para abrir o insight; arraste para mudar esforço e impacto. Quem prefere
+          Clique num ponto para abrir o item; arraste para mudar esforço e impacto. Quem prefere
           teclado pode editar os dois campos no formulário.
         </p>
       ) : null}

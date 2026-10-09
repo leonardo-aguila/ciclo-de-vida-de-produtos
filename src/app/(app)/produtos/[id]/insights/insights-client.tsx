@@ -138,7 +138,7 @@ export function InsightsClient({
                   }}
                 >
                   <Plus className="h-4 w-4" />
-                  Novo insight
+                  Novo item
                 </Button>
               ) : null
             }
@@ -183,7 +183,7 @@ export function InsightsClient({
 
             {visible.length === 0 ? (
               <EmptyState
-                title={insights.length === 0 ? "Nenhum insight" : "Nenhum insight com esse status"}
+                title={insights.length === 0 ? "Nenhum item no backlog" : "Nenhum item com esse status"}
                 description={
                   insights.length === 0
                     ? "Registre o que chega de clientes, vendas, suporte e pesquisa, e priorize pelo score."
@@ -195,7 +195,7 @@ export function InsightsClient({
                 <table className="table">
                   <thead>
                     <tr>
-                      <th scope="col">Insight</th>
+                      <th scope="col">Item</th>
                       <th scope="col">Origem</th>
                       <th scope="col">Status</th>
                       <th scope="col" className="num">Esforço</th>
@@ -328,7 +328,7 @@ function InsightDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent title={editing ? insight!.title : "Novo insight"}>
+      <DialogContent title={editing ? insight!.title : "Novo item do backlog"}>
         <form action={formAction} className="space-y-3" noValidate>
           {editing ? (
             <input type="hidden" name="id" value={insight!.id} />
@@ -472,8 +472,8 @@ function ConvertDialog({
         </Button>
       </DialogTrigger>
       <DialogContent
-        title="Converter insight em tarefa"
-        description="Uma tarefa por linha. O insight passa para Em execução e as tarefas ficam ligadas a ele."
+        title="Converter item em tarefa"
+        description="Uma tarefa por linha. O item passa para Em execução e as tarefas ficam ligadas a ele."
       >
         <form action={formAction} className="space-y-3" noValidate>
           <input type="hidden" name="id" value={insight.id} />
