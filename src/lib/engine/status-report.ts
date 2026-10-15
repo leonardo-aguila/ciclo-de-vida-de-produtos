@@ -484,51 +484,78 @@ function endOfNextWeek(today: string): string {
   return addDaysToIso(today, toSunday + 7);
 }
 
-/** Uma linha de item: o que é, para quando e de quem. */
-function line(item: ReportItem): string {
-  const prazo = item.dueDate
-    ? `${formatDate(item.dueDate)}${item.dLabel ? ` (${item.dLabel})` : ""}`
-    : "sem prazo";
-  return `• ${item.name} — ${prazo} — ${item.ownerLabel}`;
-}
+/** Quantos avanços o bloco 1 lista antes de fechar com o total. */
+const MAX_AVANCOS = 5;
 
 /**
- * O status escrito, em três blocos.
+ * O status executivo, em três blocos: avanços, entregas prioritárias e ação
+ * solicitada.
  *
- * Em andamento, atrasadas e as prioridades das próximas duas semanas — cada
- * item com prazo e responsável, que é o que um status precisa para alguém
- * agir. O que já fechou não entra: ninguém age sobre o que está pronto, e uma
- * lista de vinte concluídas enterra as três que travam o lançamento.
+ * O formato é o da mensagem que o time já envia. O que muda é a origem: cada
+ * linha sai de uma tarefa cadastrada, com o responsável e o prazo que estão
+ * no quadro, em vez de serem recopiados à mão toda semana.
  *
- * O "por que isto importa" de cada item continua de fora. É leitura de quem
- * assina, e uma frase gerada ali seria um palpite confiante numa mensagem
- * sobre a qual as pessoas tomam decisão.
+ * Três coisas do modelo original NÃO são geradas, porque nenhuma delas está
+ * nos dados:
+ *
+ *   1. o que cada avanço significou ("ambiente pronto para a utilização");
+ *   2. o ponto de atenção de uma entrega que ainda está no prazo;
+ *   3. qualquer juízo sobre risco de não entregar.
+ *
+ * As três são leitura de quem assina. A única exceção é o ponto de atenção de
+ * uma entrega **vencida**: ali o atraso é fato, e o fato é escrito.
  */
 export function buildWrittenUpdate(report: StatusReport, today: string): string {
-  const lines: string[] = ["Prezados, boa tarde.", ""];
+  const linhas: string[] = ["Olá, pessoal!", ""];
 
   if (report.d0Label && report.daysToLaunch !== null && report.daysToLaunch > 0) {
-    lines.push(
+    linhas.push(
       `Faltam ${report.daysToLaunch} dias úteis para o lançamento do ${report.productName} ` +
-        `(${report.d0Label}). Segue o status das entregas.`,
+        `(${report.d0Label}). Compartilho os principais avanços, entregas prioritárias e ` +
+        "pontos de atenção, conforme o cronograma atualizado.",
     );
   } else if (report.d0Label && report.daysToLaunch !== null) {
-    lines.push(
-      `O lançamento do ${report.productName} foi em ${report.d0Label}. Segue o status das entregas.`,
+    linhas.push(
+      `O lançamento do ${report.productName} foi em ${report.d0Label}. Compartilho os ` +
+        "principais avanços, entregas prioritárias e pontos de atenção, conforme o " +
+        "cronograma atualizado.",
     );
   } else {
-    lines.push(
-      `Segue o status das entregas do ${report.productName}. ` +
-        "Nenhuma entrega está marcada como o evento de lançamento, então não há contagem regressiva.",
+    linhas.push(
+      `Compartilho o status das entregas do ${report.productName}. Nenhuma entrega está ` +
+        "marcada como o evento de lançamento, então não há contagem regressiva.",
     );
   }
-  lines.push("");
+  linhas.push("");
 
-  const emAndamento = report.items.filter((item) => item.kind === "doing");
-  const atrasadas = report.items.filter((item) => item.kind === "overdue");
+  /* --- 1. Avanços ------------------------------------------------------- */
+
+  const concluidas = report.items.filter((item) => item.kind === "done");
+  // Os mais recentes primeiro: num cronograma longo, o que fechou em janeiro
+  // não é avanço desta semana.
+  const recentes = [...concluidas]
+    .sort((a, b) => (b.dueDate ?? "").localeCompare(a.dueDate ?? ""))
+    .slice(0, MAX_AVANCOS);
+
+  linhas.push("1. Avanços");
+  linhas.push("");
+  if (concluidas.length === 0) {
+    linhas.push("• Nenhuma entrega concluída até aqui.");
+  } else {
+    for (const item of recentes) {
+      linhas.push(`• ${item.name}${item.ownerLabel !== "—" ? ` — ${item.ownerLabel}` : ""}:`);
+    }
+    linhas.push(
+      `• Total: ${concluidas.length} ${concluidas.length === 1 ? "entrega concluída" : "entregas concluídas"} no cronograma.`,
+    );
+  }
+  linhas.push("");
+
+  /* --- 2. Entregas prioritárias ----------------------------------------- */
 
   const limite = endOfNextWeek(today);
-  const prioridades = report.items.filter(
+  const atrasadas = report.items.filter((item) => item.kind === "overdue");
+  const proximas = report.items.filter(
     (item) =>
       item.kind !== "done" &&
       item.kind !== "overdue" &&
@@ -536,41 +563,52 @@ export function buildWrittenUpdate(report: StatusReport, today: string): string 
       item.dueDate >= today &&
       item.dueDate <= limite,
   );
+  // Vencidas primeiro: é o que o leitor precisa ver antes de rolar a tela.
+  const prioritarias = [...atrasadas, ...proximas];
 
-  lines.push(`ATRASADAS (${atrasadas.length})`);
-  if (atrasadas.length === 0) {
-    lines.push("• Nenhuma entrega com prazo vencido.");
+  linhas.push("2. Entregas prioritárias");
+  linhas.push("");
+  if (prioritarias.length === 0) {
+    linhas.push("• Nenhuma entrega vencida, nesta semana ou na próxima.");
   } else {
-    for (const item of atrasadas) lines.push(line(item));
+    for (const item of prioritarias) {
+      const dono = item.ownerLabel !== "—" ? item.ownerLabel : "sem responsável";
+      const prazo = item.dueDate ? formatDateShort(item.dueDate) : "sem prazo";
+      linhas.push(`• ${dono} | ${prazo}: ${item.name}. Status: ${item.statusLabel}.`);
+      if (item.kind === "overdue" && item.dueDate) {
+        const atraso = Math.abs(businessDaysBetween(item.dueDate, today));
+        linhas.push(
+          `  Ponto de atenção: prazo vencido há ${atraso} ${atraso === 1 ? "dia útil" : "dias úteis"}.`,
+        );
+      }
+    }
   }
-  lines.push("");
+  linhas.push("");
 
-  lines.push(`EM ANDAMENTO (${emAndamento.length})`);
-  if (emAndamento.length === 0) {
-    lines.push("• Nenhuma entrega em andamento.");
-  } else {
-    for (const item of emAndamento) lines.push(line(item));
-  }
-  lines.push("");
+  /* --- 3. Ação solicitada ----------------------------------------------- */
 
-  lines.push(`PRIORIDADES — entregas até ${formatDate(limite)} (${prioridades.length})`);
-  if (prioridades.length === 0) {
-    lines.push("• Nenhuma entrega vence nesta nem na próxima semana.");
-  } else {
-    for (const item of prioridades) lines.push(line(item));
-  }
-  lines.push("");
+  const proximoPrazo =
+    proximas.find((item) => item.dueDate !== null)?.dueDate ??
+    atrasadas.find((item) => item.dueDate !== null)?.dueDate ??
+    null;
 
-  lines.push(
-    "Ação solicitada: peço que cada responsável confirme o prazo dos itens acima, ou sinalize um bloqueio.",
+  linhas.push("3. Ação solicitada");
+  linhas.push("");
+  linhas.push(
+    "Peço que os responsáveis confirmem a conclusão das entregas previstas" +
+      (proximoPrazo ? ` para ${formatDate(proximoPrazo)}` : "") +
+      " e sinalizem eventuais bloqueios nas demais atividades, para anteciparmos riscos e " +
+      "garantirmos a prontidão do lançamento.",
   );
-  lines.push("");
-  lines.push("Fico à disposição para detalhar qualquer ponto.");
-  lines.push("");
-  lines.push(
-    "— Rascunho gerado a partir das entregas cadastradas; prazos em dias úteis. " +
-      "Acrescente o impacto de cada item antes de enviar: por que ele importa é leitura sua.",
+  linhas.push("");
+  linhas.push("Caso tenham dúvidas ou sugestões de ajustes, fico à disposição.");
+  linhas.push("");
+  linhas.push("---");
+  linhas.push(
+    "Rascunho montado a partir do cronograma; prazos em dias úteis. Antes de enviar, " +
+      "complete cada avanço com o que ele destravou e acrescente os pontos de atenção das " +
+      "entregas que ainda estão no prazo — isso o cronograma não sabe.",
   );
 
-  return lines.join("\n");
+  return linhas.join("\n");
 }

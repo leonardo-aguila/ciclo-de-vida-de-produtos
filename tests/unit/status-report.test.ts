@@ -281,25 +281,30 @@ describe("D0 na tarefa de lançamento", () => {
 
 describe("status escrito", () => {
   const r = report([
-    task({ id: "1", name: "Feita", status: "done", dueDate: "2026-09-13",
-      assigneeName: "Marina", categoryLabel: "Produto" }),
-    task({ id: "2", name: "Validar BP", status: "doing", dueDate: "2026-10-20",
-      assigneeName: "Adriana", categoryLabel: "Finanças" }),
-    task({ id: "3", name: "Cadastrar SKU", status: "backlog", dueDate: "2026-10-01",
-      assigneeName: "Severino", categoryLabel: "Sales Ops" }),
-    task({ id: "4", name: "Sales kit", status: "backlog", dueDate: "2026-10-13",
+    task({ id: "1", name: "Configurar ambientes para clientes", status: "done", dueDate: "2026-09-28",
+      assigneeName: "Marina", categoryLabel: "Engenharia" }),
+    task({ id: "2", name: "Aprovar mensagem e proposta de valor", status: "done", dueDate: "2026-10-02",
       assigneeName: "Felipe", categoryLabel: "Marketing" }),
-    task({ id: "5", name: "Treinamento", status: "backlog", dueDate: "2026-11-30",
+    task({ id: "3", name: "Validar o Business Plan", status: "doing", dueDate: "2026-10-19",
+      assigneeName: "Adriana", categoryLabel: "Finanças" }),
+    task({ id: "4", name: "Concluir o mapa de riscos", status: "backlog", dueDate: "2026-10-13",
+      assigneeName: "Severino", categoryLabel: "Produto" }),
+    task({ id: "5", name: "Cadastrar proposta e SKU", status: "backlog", dueDate: "2026-10-05",
+      assigneeName: "Severino", categoryLabel: "Sales Ops" }),
+    task({ id: "6", name: "Treinamento de canais", status: "backlog", dueDate: "2026-11-30",
       assigneeName: "Inayan", categoryLabel: "Produto" }),
   ]);
   const texto = buildWrittenUpdate(r, TODAY);
 
-  it("abre com a contagem regressiva em dias úteis", () => {
-    expect(texto).toContain("Faltam 19 dias úteis para o lançamento do Nimbus Astro (04/11)");
+  it("abre no tom do modelo, com a contagem em dias úteis", () => {
+    expect(texto.startsWith("Olá, pessoal!")).toBe(true);
+    expect(texto).toContain(
+      "Faltam 19 dias úteis para o lançamento do Nimbus Astro (04/11). Compartilho os principais avanços",
+    );
   });
 
-  it("tem os três blocos pedidos, nessa ordem", () => {
-    const ordem = ["ATRASADAS (1)", "EM ANDAMENTO (1)", "PRIORIDADES"];
+  it("tem os três blocos numerados, nessa ordem", () => {
+    const ordem = ["1. Avanços", "2. Entregas prioritárias", "3. Ação solicitada"];
     let cursor = -1;
     for (const bloco of ordem) {
       const pos = texto.indexOf(bloco);
@@ -308,37 +313,76 @@ describe("status escrito", () => {
     }
   });
 
-  it("dá prazo e responsável em cada linha", () => {
-    expect(texto).toContain("• Cadastrar SKU — 01/10/2026 (D-24) — Severino · Sales Ops");
-    expect(texto).toContain("• Validar BP — 20/10/2026 (D-11) — Adriana · Finanças");
+  it("lista os avanços do mais recente ao mais antigo e fecha com o total", () => {
+    const avancos = texto.slice(texto.indexOf("1. Avanços"), texto.indexOf("2. Entregas"));
+    expect(avancos.indexOf("Aprovar mensagem")).toBeLessThan(avancos.indexOf("Configurar ambientes"));
+    expect(avancos).toContain("• Total: 2 entregas concluídas no cronograma.");
   });
 
-  it("limita as prioridades a esta e à próxima semana", () => {
-    // Hoje é quinta 08/10; a janela fecha no domingo 18/10.
-    expect(texto).toContain("PRIORIDADES — entregas até 18/10/2026 (1)");
-    expect(texto).toContain("• Sales kit — 13/10/2026");
-    // 30/11 está fora da janela; 01/10 já venceu e está em ATRASADAS.
-    expect(texto).not.toContain("Treinamento — 30/11");
+  it("deixa os dois-pontos abertos, para o autor dizer o que cada avanço destravou", () => {
+    // É a metade editorial do modelo: "ambiente pronto para a utilização".
+    expect(texto).toContain("• Configurar ambientes para clientes — Marina · Engenharia:");
   });
 
-  it("não lista o que já foi concluído", () => {
-    // Ninguém age sobre o que está pronto.
-    expect(texto).not.toContain("Feita");
+  it("limita os avanços listados, mas conta todos no total", () => {
+    const muitas = report(
+      Array.from({ length: 9 }, (_, i) =>
+        task({ id: String(i), name: `Entrega ${i}`, status: "done",
+          dueDate: `2026-09-${String(i + 10).padStart(2, "0")}` }),
+      ),
+    );
+    const t = buildWrittenUpdate(muitas, TODAY);
+    expect((t.match(/^• Entrega /gm) ?? []).length).toBe(5);
+    expect(t).toContain("• Total: 9 entregas concluídas no cronograma.");
+  });
+
+  it("escreve a prioritária no formato responsável | prazo: entrega. Status.", () => {
+    expect(texto).toContain("• Severino · Produto | 13/10: Concluir o mapa de riscos. Status: A iniciar.");
+    expect(texto).toContain("• Severino · Sales Ops | 05/10: Cadastrar proposta e SKU. Status: Vencida.");
+  });
+
+  it("fecha a janela no domingo da semana seguinte", () => {
+    // Hoje é quinta 08/10; a janela vai até domingo 18/10. O Business Plan
+    // vence em 19/10 e fica de fora — é prioridade da semana seguinte.
+    expect(texto).not.toContain("Validar o Business Plan");
+  });
+
+  it("põe as vencidas antes das que ainda estão no prazo", () => {
+    const bloco = texto.slice(texto.indexOf("2. Entregas"), texto.indexOf("3. Ação"));
+    expect(bloco.indexOf("Cadastrar proposta e SKU")).toBeLessThan(bloco.indexOf("mapa de riscos"));
+  });
+
+  it("só escreve ponto de atenção onde o atraso é fato", () => {
+    // 05/10 era segunda; hoje é quinta 08/10 — três dias úteis de atraso.
+    expect(texto).toContain("Ponto de atenção: prazo vencido há 3 dias úteis.");
+    // A que está no prazo não ganha ponto de atenção inventado.
+    const emDia = texto.slice(texto.indexOf("Concluir o mapa de riscos"));
+    expect(emDia.slice(0, 120)).not.toContain("Ponto de atenção");
+  });
+
+  it("não traz entrega fora da janela desta e da próxima semana", () => {
+    expect(texto).not.toContain("Treinamento de canais");
+  });
+
+  it("pede confirmação citando o próximo prazo em aberto", () => {
+    expect(texto).toContain(
+      "confirmem a conclusão das entregas previstas para 13/10/2026 e sinalizem eventuais bloqueios",
+    );
+    expect(texto).toContain("Caso tenham dúvidas ou sugestões de ajustes, fico à disposição.");
+  });
+
+  it("avisa o autor do que o cronograma não sabe", () => {
+    expect(texto).toContain("complete cada avanço com o que ele destravou");
+    expect(texto).not.toMatch(/^Impacto:/m);
   });
 
   it("diz explicitamente quando um bloco está vazio", () => {
-    const limpo = buildWrittenUpdate(
-      report([task({ id: "1", name: "A", status: "done", dueDate: "2026-09-13" })]),
+    const vazio = buildWrittenUpdate(
+      report([task({ id: "1", name: "Futura", status: "backlog", dueDate: "2026-12-20" })]),
       TODAY,
     );
-    expect(limpo).toContain("Nenhuma entrega com prazo vencido.");
-    expect(limpo).toContain("Nenhuma entrega em andamento.");
-    expect(limpo).toContain("Nenhuma entrega vence nesta nem na próxima semana.");
-  });
-
-  it("não inventa a linha de impacto", () => {
-    expect(texto).not.toMatch(/^Impacto:/m);
-    expect(texto).toContain("por que ele importa é leitura sua");
+    expect(vazio).toContain("• Nenhuma entrega concluída até aqui.");
+    expect(vazio).toContain("• Nenhuma entrega vencida, nesta semana ou na próxima.");
   });
 
   it("explica a falta de âncora em vez de omiti-la", () => {
