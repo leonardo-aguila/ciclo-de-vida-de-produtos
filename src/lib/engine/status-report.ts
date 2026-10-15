@@ -326,7 +326,13 @@ function buildHeadline(
   launchDate: string | null,
   daysToLaunch: number | null,
 ): string {
-  const parts = [`${productName}: ${counts.done} de ${counts.total} entregas concluídas`];
+  // A raia de uma área costuma ter uma entrega só, e "1 de 1 entregas
+  // concluídas" é um erro que aparece no título em corpo 28.
+  const singular = counts.total === 1;
+  const parts = [
+    `${productName}: ${counts.done} de ${counts.total} ` +
+      (singular ? "entrega concluída" : "entregas concluídas"),
+  ];
   if (counts.overdue > 0) {
     parts.push(
       `${counts.overdue} ${counts.overdue === 1 ? "vencida" : "vencidas"} exigindo ação`,
@@ -446,34 +452,148 @@ function columnName(items: ReportItem[]): string {
  * them, because the deliveries that fall off the end are the late ones.
  */
 export function buildDeckColumns(report: StatusReport): DeckColumn[][] {
-  const columns: DeckColumn[] = [];
+  return paginate(planColumns(report.buckets)).map((page) =>
+    page.map((plan) => renderColumn(plan, plan.items, (item) => item.deckOwnerLabel)),
+  );
+}
 
-  for (const bucket of report.buckets) {
+/**
+ * Uma coluna antes de virar cards: o cabeçalho e as entregas que caem nela.
+ *
+ * O plano existe separado da renderização porque a raia de cada área reusa
+ * exatamente estas colunas, só com menos cards dentro.
+ */
+type ColumnPlan = {
+  periodo: string;
+  nome: string;
+  destaque?: boolean;
+  items: ReportItem[];
+};
+
+function planColumns(buckets: ReportBucket[]): ColumnPlan[] {
+  const plans: ColumnPlan[] = [];
+  for (const bucket of buckets) {
     // A bucket above the card limit is split rather than overflowed.
     for (let start = 0; start < bucket.items.length; start += DECK.cardsPerColumn) {
       const slice = bucket.items.slice(start, start + DECK.cardsPerColumn);
       const atLaunch = slice.every((item) => item.dOffset === 0);
-      columns.push({
+      plans.push({
         periodo: bucket.label,
         nome: columnName(slice),
         destaque: atLaunch || undefined,
-        entregas: slice.map((item) => ({
-          marco: item.dLabel ?? "—",
-          data: item.dueLabel,
-          texto: deckText(item.name),
-          status: DECK_STATUS[item.kind],
-          dono: item.deckOwnerLabel,
-          ...(item.reference ? { chave: item.reference } : {}),
-        })),
+        items: slice,
       });
     }
   }
+  return plans;
+}
 
-  const pages: DeckColumn[][] = [];
+function renderColumn(
+  plan: ColumnPlan,
+  items: ReportItem[],
+  ownerOf: (item: ReportItem) => string,
+): DeckColumn {
+  return {
+    periodo: plan.periodo,
+    nome: plan.nome,
+    ...(plan.destaque ? { destaque: true } : {}),
+    entregas: items.map((item) => ({
+      marco: item.dLabel ?? "—",
+      data: item.dueLabel,
+      texto: deckText(item.name),
+      status: DECK_STATUS[item.kind],
+      dono: ownerOf(item),
+      ...(item.reference ? { chave: item.reference } : {}),
+    })),
+  };
+}
+
+function paginate<T>(columns: T[]): T[][] {
+  const pages: T[][] = [];
   for (let index = 0; index < columns.length; index += DECK.columnsPerSlide) {
     pages.push(columns.slice(index, index + DECK.columnsPerSlide));
   }
   return pages.length > 0 ? pages : [[]];
+}
+
+/* -------------------------------------------------------------------------- */
+/* Raias por área                                                             */
+/* -------------------------------------------------------------------------- */
+
+export type AreaLane = {
+  area: string;
+  counts: StatusReport["counts"];
+  /** Uma frase factual para o título da raia. */
+  headline: string;
+  pages: DeckColumn[][];
+};
+
+/** O rótulo das entregas que ninguém classificou. */
+const NO_AREA = "Sem área";
+
+/**
+ * As entregas de cada área, como uma raia que atravessa o mesmo eixo de tempo.
+ *
+ * O Master empilha cards em colunas de prazo e não tem linha que atravesse as
+ * colunas — desenhar a grade à mão já foi tentado e sai com fonte, margem e
+ * paleta erradas. A raia aqui é um slide: **as mesmas colunas** do slide
+ * consolidado, com os mesmos cabeçalhos, mostrando só os cards daquela área.
+ * Como o eixo não muda de um slide para o outro, as raias empilham e leem
+ * como as linhas de uma grade — e a coluna que fica vazia numa área é
+ * informação, não falha: é a janela em que aquela área não entrega nada.
+ *
+ * Com uma área só (ou nenhuma), a raia repetiria o consolidado inteiro: não
+ * sai nada.
+ */
+export function buildAreaLanes(report: StatusReport): AreaLane[] {
+  const areaOf = (item: ReportItem) => item.categoryLabel?.trim() || NO_AREA;
+
+  const order: string[] = [];
+  const seen = new Set<string>();
+  for (const item of report.items) {
+    const area = areaOf(item);
+    if (!seen.has(area)) {
+      seen.add(area);
+      order.push(area);
+    }
+  }
+  if (order.length < 2) return [];
+
+  // `report.items` já vem ordenado por prazo, então a ordem de aparição é a
+  // ordem em que cada área entra no plano. "Sem área" fecha a lista.
+  order.sort((a, b) => (a === NO_AREA ? 1 : b === NO_AREA ? -1 : 0));
+
+  const plans = paginate(planColumns(report.buckets));
+
+  return order.map((area) => {
+    const items = report.items.filter((item) => areaOf(item) === area);
+    const counts = {
+      total: items.length,
+      done: items.filter((item) => item.kind === "done").length,
+      doing: items.filter((item) => item.kind === "doing").length,
+      todo: items.filter((item) => item.kind === "todo").length,
+      overdue: items.filter((item) => item.kind === "overdue").length,
+    };
+    return {
+      area,
+      counts,
+      headline: buildHeadline(area, counts, report.d0, report.daysToLaunch),
+      pages: plans
+        .map((page) =>
+          page.map((plan) =>
+            // Na raia a área é o slide; quem o card nomeia passa a ser a
+            // pessoa, que é a informação que ainda falta ali.
+            renderColumn(
+              plan,
+              plan.items.filter((item) => areaOf(item) === area),
+              (item) => (item.assigneeName ? compactPerson(item.assigneeName) : "—"),
+            ),
+          ),
+        )
+        // Uma página inteira sem nenhum card da área não diz nada: some.
+        .filter((page) => page.some((column) => column.entregas.length > 0)),
+    };
+  });
 }
 
 /** Domingo que fecha a semana da data, para "esta e a próxima semana". */
@@ -611,4 +731,80 @@ export function buildWrittenUpdate(report: StatusReport, today: string): string 
   );
 
   return linhas.join("\n");
+}
+
+/* -------------------------------------------------------------------------- */
+/* Spec do gerador                                                            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * O spec que o gerador oficial lê: o consolidado e, atrás dele, uma raia por
+ * área.
+ *
+ * Mora no motor, não na rota, porque é cálculo puro — e porque um teste que
+ * precisa subir banco para conferir o rodapé de um slide não é escrito.
+ */
+export function buildDeckSpec(productName: string, report: StatusReport, today: string) {
+  const pages = buildDeckColumns(report);
+  const lanes = buildAreaLanes(report);
+  const anchorNote = report.d0TaskName
+    ? `D = dias úteis até o D0 (${report.d0TaskName}, ${report.d0Label}).`
+    : report.d0Label
+      ? `D = dias úteis até a data prevista de lançamento (${report.d0Label}).`
+      : "Nenhuma entrega está marcada como o evento de lançamento, então não há D.";
+
+  const nota =
+    `${anchorNote} Feriados não são considerados. ` +
+    `Card verde = concluída; vermelho = vencida. Gerado em ${formatDate(today)}.`;
+
+  // Uma raia por área, depois do consolidado. O Master empilha cards em
+  // colunas de prazo e não tem linha que atravesse as colunas, então a raia é
+  // um slide com as mesmas colunas e só as entregas daquela área — e não uma
+  // grade redesenhada à mão, que sai com fonte e margem trocadas.
+  const laneSlides = lanes.flatMap((lane) =>
+    lane.pages.map((columns, index) => ({
+      layout: "plano-entregas",
+      eyebrow: `${productName} · Raia · ${lane.area}`,
+      titulo:
+        lane.headline + (lane.pages.length > 1 ? ` (${index + 1} de ${lane.pages.length})` : ""),
+      resumo_info: [`área: ${lane.area}`],
+      alertas:
+        lane.counts.overdue > 0
+          ? [
+              `${lane.counts.overdue} ${lane.counts.overdue === 1 ? "entrega vencida" : "entregas vencidas"}`,
+            ]
+          : [],
+      colunas: columns,
+      nota,
+    })),
+  );
+
+  return {
+    rodape: `${productName} · Documento interno`,
+    slides: pages.map((columns, index) => ({
+      layout: "plano-entregas",
+      eyebrow: `${productName} · Plano de entregas`,
+      titulo:
+        report.headline + (pages.length > 1 ? ` (${index + 1} de ${pages.length})` : ""),
+      // O Master já escreve as contagens sozinho; `resumo_info` entra depois
+      // delas. Mandar a linha inteira aqui duplicava tudo e estourava a linha.
+      resumo_info: report.d0Label
+        ? [
+            report.daysToLaunch !== null && report.daysToLaunch > 0
+              ? `evento em ${report.d0Label} (faltam ${report.daysToLaunch} dias úteis)`
+              : `evento em ${report.d0Label}`,
+          ]
+        : [],
+      // Only what is actually late gets the amber treatment. An alert that
+      // fires on every deck is an alert nobody reads.
+      alertas:
+        report.counts.overdue > 0
+          ? [
+              `${report.counts.overdue} ${report.counts.overdue === 1 ? "entrega vencida" : "entregas vencidas"}`,
+            ]
+          : [],
+      colunas: columns,
+      nota,
+    })).concat(laneSlides),
+  };
 }

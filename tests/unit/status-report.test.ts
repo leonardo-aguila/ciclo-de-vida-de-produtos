@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildAreaLanes,
+  buildDeckColumns,
   bucketize,
   compactPerson,
   deliveryName,
@@ -388,5 +390,78 @@ describe("status escrito", () => {
   it("explica a falta de âncora em vez de omiti-la", () => {
     const sem = buildWrittenUpdate(report([task({ id: "1", name: "X" })], null), TODAY);
     expect(sem).toContain("Nenhuma entrega está marcada como o evento de lançamento");
+  });
+});
+
+describe("raias por área", () => {
+  // Oito entregas em prazos distintos: acima das seis por coluna, então o
+  // consolidado quebra em duas colunas e a raia tem onde ficar vazia.
+  const tasks = [
+    task({ id: "1", name: "Criar tese", categoryLabel: "Marketing", dueDate: "2026-10-12", assigneeName: "Ana Carolina Prado Lima" }),
+    task({ id: "2", name: "Definir preço", categoryLabel: "Comercial", dueDate: "2026-10-13" }),
+    task({ id: "3", name: "Aprovar verba", categoryLabel: "Marketing", dueDate: "2026-10-14" }),
+    task({ id: "4", name: "Montar proposta", categoryLabel: "Comercial", dueDate: "2026-10-15" }),
+    task({ id: "5", name: "Treinar suporte", categoryLabel: "Marketing", dueDate: "2026-10-16" }),
+    task({ id: "6", name: "Publicar página", categoryLabel: "Marketing", dueDate: "2026-10-19" }),
+    task({ id: "7", name: "Revisar contrato", categoryLabel: "Jurídico", dueDate: "2026-10-20" }),
+    task({ id: "8", name: "Tarefa órfã", dueDate: "2026-10-21" }),
+  ];
+
+  it("usa exatamente as colunas do slide consolidado", () => {
+    // É isso que faz a raia ser raia: o eixo de tempo não muda de um slide
+    // para o outro, então as linhas empilham e leem como uma grade.
+    const built = report(tasks);
+    const header = (columns: { periodo: string; nome: string }[]) =>
+      columns.map((column) => `${column.nome}·${column.periodo}`);
+    const consolidated = buildDeckColumns(built).map(header);
+
+    for (const lane of buildAreaLanes(built)) {
+      expect(lane.pages.map(header)).toEqual(consolidated);
+    }
+  });
+
+  it("distribui cada entrega em uma única raia", () => {
+    const lanes = buildAreaLanes(report(tasks));
+    const cards = lanes.flatMap((lane) =>
+      lane.pages.flatMap((page) => page.flatMap((column) => column.entregas.map((e) => e.texto))),
+    );
+    expect(cards).toHaveLength(tasks.length);
+    expect(new Set(cards).size).toBe(tasks.length);
+  });
+
+  it("deixa a coluna vazia quando a área não entrega nada naquela janela", () => {
+    const juridico = buildAreaLanes(report(tasks)).find((lane) => lane.area === "Jurídico")!;
+    const counts = juridico.pages[0]!.map((column) => column.entregas.length);
+    expect(counts).toContain(0);
+    expect(counts.reduce((a, b) => a + b, 0)).toBe(1);
+  });
+
+  it("fecha a lista com as entregas sem área", () => {
+    const lanes = buildAreaLanes(report(tasks));
+    expect(lanes[lanes.length - 1]!.area).toBe("Sem área");
+  });
+
+  it("nomeia a pessoa no card, já que a área virou o slide", () => {
+    // No consolidado o card nomeia a área; na raia ela é redundante.
+    const marketing = buildAreaLanes(report(tasks)).find((lane) => lane.area === "Marketing")!;
+    const donos = marketing.pages[0]!.flatMap((column) => column.entregas.map((e) => e.dono));
+    expect(donos).toContain("Ana Lima");
+    expect(donos).not.toContain("Marketing");
+  });
+
+  it("não produz raia nenhuma quando só há uma área", () => {
+    // A raia repetiria o consolidado inteiro.
+    const single = report([
+      task({ id: "1", name: "Criar tese", categoryLabel: "Marketing", dueDate: "2026-10-20" }),
+      task({ id: "2", name: "Aprovar verba", categoryLabel: "Marketing", dueDate: "2026-10-27" }),
+    ]);
+    expect(buildAreaLanes(single)).toEqual([]);
+  });
+
+  it("conta no singular a área com uma entrega só", () => {
+    const lanes = buildAreaLanes(report(tasks));
+    const juridico = lanes.find((lane) => lane.area === "Jurídico")!;
+    expect(juridico.headline).toContain("de 1 entrega concluída");
+    expect(juridico.headline).not.toContain("1 entregas");
   });
 });

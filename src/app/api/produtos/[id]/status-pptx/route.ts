@@ -18,12 +18,8 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth/guard";
-import {
-  buildDeckColumns,
-  buildStatusReport,
-  type DeckColumn,
-} from "@/lib/engine/status-report";
-import { formatDate, todayIso } from "@/lib/format";
+import { buildDeckSpec, buildStatusReport } from "@/lib/engine/status-report";
+import { todayIso } from "@/lib/format";
 import { findDoneColumn, listEnumValues } from "@/lib/queries/enums";
 import { getProduct } from "@/lib/queries/products";
 import { listTasks } from "@/lib/queries/tasks";
@@ -34,51 +30,6 @@ const run = promisify(execFile);
 
 const VENDOR = join(process.cwd(), "vendor", "deck");
 const PYTHON = join(process.cwd(), ".venv-pptx", "bin", "python");
-
-/** The spec the official generator reads. One slide per page of columns. */
-function buildSpec(
-  productName: string,
-  report: ReturnType<typeof buildStatusReport>,
-  pages: DeckColumn[][],
-  today: string,
-) {
-  const anchorNote = report.d0TaskName
-    ? `D = dias úteis até o D0 (${report.d0TaskName}, ${report.d0Label}).`
-    : report.d0Label
-      ? `D = dias úteis até a data prevista de lançamento (${report.d0Label}).`
-      : "Nenhuma entrega está marcada como o evento de lançamento, então não há D.";
-
-  return {
-    rodape: `${productName} · Documento interno`,
-    slides: pages.map((columns, index) => ({
-      layout: "plano-entregas",
-      eyebrow: `${productName} · Plano de entregas`,
-      titulo:
-        report.headline + (pages.length > 1 ? ` (${index + 1} de ${pages.length})` : ""),
-      // O Master já escreve as contagens sozinho; `resumo_info` entra depois
-      // delas. Mandar a linha inteira aqui duplicava tudo e estourava a linha.
-      resumo_info: report.d0Label
-        ? [
-            report.daysToLaunch !== null && report.daysToLaunch > 0
-              ? `evento em ${report.d0Label} (faltam ${report.daysToLaunch} dias úteis)`
-              : `evento em ${report.d0Label}`,
-          ]
-        : [],
-      // Only what is actually late gets the amber treatment. An alert that
-      // fires on every deck is an alert nobody reads.
-      alertas:
-        report.counts.overdue > 0
-          ? [
-              `${report.counts.overdue} ${report.counts.overdue === 1 ? "entrega vencida" : "entregas vencidas"}`,
-            ]
-          : [],
-      colunas: columns,
-      nota:
-        `${anchorNote} Feriados não são considerados. ` +
-        `Card verde = concluída; vermelho = vencida. Gerado em ${formatDate(today)}.`,
-    })),
-  };
-}
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -116,8 +67,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     perBucket: 6,
   });
 
-  const pages = buildDeckColumns(report);
-  const spec = buildSpec(product.name, report, pages, today);
+  const spec = buildDeckSpec(product.name, report, today);
 
   const dir = await mkdtemp(join(tmpdir(), "status-deck-"));
   try {
