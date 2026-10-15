@@ -115,6 +115,7 @@ export function TasksClient({
           name: task.name,
           assigneeName: task.assigneeName,
           categoryLabel: task.categoryLabel,
+          startDate: task.startDate,
           dueDate: task.dueDate,
           status: task.status,
           description: task.description,

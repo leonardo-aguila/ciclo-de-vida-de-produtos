@@ -23,6 +23,7 @@ export type ReportTask = {
   name: string;
   assigneeName: string | null;
   categoryLabel: string | null;
+  startDate: string | null;
   dueDate: string | null;
   status: string;
   /** Free text the import left behind — a Jira key, typically. */
@@ -36,6 +37,8 @@ export type ReportItem = {
   dLabel: string | null;
   /** Days between the deadline and D0, negative before. Null without D0. */
   dOffset: number | null;
+  /** O mesmo, para a data de início: é o que dá largura ao card no playbook. */
+  startOffset: number | null;
   dueDate: string | null;
   dueLabel: string;
   assigneeName: string | null;
@@ -264,10 +267,12 @@ export function buildStatusReport(input: {
       // dias de trabalho, senão um prazo numa segunda parece ter uma folga
       // que o fim de semana já consumiu.
       const dOffset = d0 && task.dueDate ? businessDaysBetween(d0, task.dueDate) : null;
+      const startOffset = d0 && task.startDate ? businessDaysBetween(d0, task.startDate) : null;
       return {
         id: task.id,
         name: deliveryName(task.name),
         dOffset,
+        startOffset,
         dLabel: dOffset === null ? null : dLabelOf(dOffset),
         dueDate: task.dueDate,
         dueLabel: task.dueDate ? formatDateShort(task.dueDate) : "—",
@@ -611,4 +616,179 @@ export function buildWrittenUpdate(report: StatusReport, today: string): string 
   );
 
   return linhas.join("\n");
+}
+
+/* -------------------------------------------------------------------------- */
+/* Playbook: raias de área × janelas de prazo                                 */
+/* -------------------------------------------------------------------------- */
+
+export type PlaybookColumn = {
+  /** "D-90 a D-21", "D0", "D+1 a D+33". */
+  period: string;
+  /** Janela em dias úteis, fechada nas duas pontas. */
+  from: number;
+  to: number;
+  /** A coluna do evento. Ganha destaque no slide. */
+  isLaunch: boolean;
+  /** "13/09 a 02/10" — a janela em datas, que é o que o leitor confere. */
+  dateRange: string;
+};
+
+export type PlaybookCard = {
+  item: ReportItem;
+  /** Índices de coluna que o card atravessa, do início ao prazo. */
+  startColumn: number;
+  endColumn: number;
+  /** Linha dentro da raia, para dois cards não se sobreporem. */
+  row: number;
+};
+
+export type PlaybookLane = {
+  area: string;
+  cards: PlaybookCard[];
+  /** Quantas linhas a raia precisa para caber sem sobreposição. */
+  rows: number;
+};
+
+export type Playbook = { columns: PlaybookColumn[]; lanes: PlaybookLane[] };
+
+/**
+ * A área que dá nome à raia.
+ *
+ * A categoria da tarefa é a área. Quando não há — e não há nas tarefas
+ * importadas de um quadro externo, que não trazem categoria — a raia cai para
+ * o responsável, porque uma única faixa "Sem área" com tudo dentro não é um
+ * playbook, é uma lista.
+ */
+function laneOf(item: ReportItem): string {
+  return item.categoryLabel ?? item.assigneeName ?? "Sem área";
+}
+
+/** "13/09 a 02/10", ou só a data quando a janela tem um dia. */
+function rangeLabel(from: string, to: string): string {
+  return from === to ? from : `${from} a ${to}`;
+}
+
+/** Rótulo de uma janela: "D-90 a D-21", ou "D0" quando é um dia só. */
+function periodLabel(from: number, to: number): string {
+  return from === to ? dLabelOf(from) : `${dLabelOf(from)} a ${dLabelOf(to)}`;
+}
+
+/**
+ * Divide o eixo do tempo em janelas, isolando o dia do lançamento.
+ *
+ * O D0 fica numa coluna própria mesmo que nenhuma entrega caia nele: é a
+ * referência que organiza a leitura do slide inteiro, e uma coluna ausente
+ * faria o "antes" e o "depois" se encostarem.
+ */
+export type PlaybookAxis = {
+  columns: PlaybookColumn[];
+  /** Id da entrega → índice da coluna. A fatia manda, não o intervalo. */
+  columnOf: Map<string, number>;
+};
+
+export function playbookColumns(items: ReportItem[], maxBefore = 5): PlaybookAxis {
+  const comPrazo = items.filter((i) => i.dOffset !== null);
+  if (comPrazo.length === 0) return { columns: [], columnOf: new Map() };
+
+  const antes = comPrazo.filter((i) => i.dOffset! < 0).sort((a, b) => a.dOffset! - b.dOffset!);
+  const depois = comPrazo.filter((i) => i.dOffset! > 0).sort((a, b) => a.dOffset! - b.dOffset!);
+  const colunas: PlaybookColumn[] = [];
+  const columnOf = new Map<string, number>();
+
+  const janela = (fatia: ReportItem[]): PlaybookColumn => {
+    const from = fatia[0]!.dOffset!;
+    const to = fatia[fatia.length - 1]!.dOffset!;
+    return {
+      period: periodLabel(from, to),
+      from,
+      to,
+      isLaunch: false,
+      dateRange: rangeLabel(fatia[0]!.dueLabel, fatia[fatia.length - 1]!.dueLabel),
+    };
+  };
+
+  if (antes.length > 0) {
+    // Fatias por quantidade de entregas, não por largura de tempo: o trabalho
+    // se concentra perto do lançamento, e faixas de tempo iguais deixariam
+    // metade das colunas vazias.
+    const n = Math.min(maxBefore, antes.length);
+    for (let k = 0; k < n; k += 1) {
+      const inicio = Math.floor((k * antes.length) / n);
+      const fim = Math.floor(((k + 1) * antes.length) / n);
+      const fatia = antes.slice(inicio, fim);
+      if (fatia.length === 0) continue;
+      for (const item of fatia) columnOf.set(item.id, colunas.length);
+      colunas.push(janela(fatia));
+    }
+  }
+
+  for (const item of comPrazo.filter((i) => i.dOffset === 0)) columnOf.set(item.id, colunas.length);
+  colunas.push({
+    period: "D0",
+    from: 0,
+    to: 0,
+    isLaunch: true,
+    dateRange: comPrazo.find((i) => i.dOffset === 0)?.dueLabel ?? "",
+  });
+
+  if (depois.length > 0) {
+    for (const item of depois) columnOf.set(item.id, colunas.length);
+    colunas.push(janela(depois));
+  }
+  return { columns: colunas, columnOf };
+}
+
+const columnOfOffset = (columns: PlaybookColumn[], offset: number): number => {
+  const exato = columns.findIndex((c) => offset >= c.from && offset <= c.to);
+  if (exato >= 0) return exato;
+  // Fora de qualquer janela: encosta na borda mais próxima em vez de sumir.
+  return offset < columns[0]!.from ? 0 : columns.length - 1;
+};
+
+/**
+ * Monta a grade: uma raia por área, um card por entrega.
+ *
+ * O card começa na coluna da data de início e termina na do prazo, como no
+ * playbook de referência — uma entrega de três semanas é uma barra de três
+ * semanas, não um ponto no fim.
+ */
+export function buildPlaybook(report: StatusReport): Playbook {
+  const { columns, columnOf } = playbookColumns(report.items);
+  if (columns.length === 0) return { columns: [], lanes: [] };
+
+  const porArea = new Map<string, ReportItem[]>();
+  for (const item of report.items) {
+    if (item.dOffset === null) continue;
+    const area = laneOf(item);
+    porArea.set(area, [...(porArea.get(area) ?? []), item]);
+  }
+
+  const lanes: PlaybookLane[] = [];
+  for (const [area, itens] of porArea) {
+    const ordenados = [...itens].sort(
+      (a, b) => (a.dOffset ?? 0) - (b.dOffset ?? 0) || a.name.localeCompare(b.name),
+    );
+    // Empacota em linhas: um card só divide a linha com quem não o encosta.
+    const ocupacao: number[] = [];
+    const cards: PlaybookCard[] = [];
+    for (const item of ordenados) {
+      const end = columnOf.get(item.id) ?? columnOfOffset(columns, item.dOffset!);
+      const start = item.startOffset === null ? end : columnOfOffset(columns, item.startOffset);
+      const startColumn = Math.min(start, end);
+      let row = ocupacao.findIndex((ocupadoAte) => ocupadoAte < startColumn);
+      if (row === -1) {
+        row = ocupacao.length;
+        ocupacao.push(end);
+      } else {
+        ocupacao[row] = end;
+      }
+      cards.push({ item, startColumn, endColumn: end, row });
+    }
+    lanes.push({ area, cards, rows: Math.max(1, ocupacao.length) });
+  }
+
+  // Raia mais cheia primeiro: o leitor começa por onde há mais trabalho.
+  lanes.sort((a, b) => b.cards.length - a.cards.length || a.area.localeCompare(b.area));
+  return { columns, lanes };
 }
