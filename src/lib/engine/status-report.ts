@@ -222,7 +222,7 @@ export function deliveryName(name: string): string {
 }
 
 /**
- * "Ana Carolina Prado Lima" → "Leonardo Aguila".
+ * "Ana Carolina Prado Lima" → "Ana Lima".
  *
  * Only for the deck: a card is 2,5 cm wide at 6pt, and a full corporate name
  * wraps over the row below it. The table and the written update keep the name

@@ -195,12 +195,12 @@ describe("dono no baralho × dono no texto", () => {
   });
 
   it("encurta nome longo no card, e só nele", () => {
-    expect(compactPerson("Ana Carolina Prado Lima")).toBe("Leonardo Aguila");
+    expect(compactPerson("Ana Carolina Prado Lima")).toBe("Ana Lima");
     expect(compactPerson("Marina Duarte")).toBe("Marina Duarte");
     expect(compactPerson("Marina")).toBe("Marina");
 
     const r = report([task({ id: "1", name: "A", assigneeName: "Ana Carolina Prado Lima" })]);
-    expect(r.items[0]!.deckOwnerLabel).toBe("Leonardo Aguila");
+    expect(r.items[0]!.deckOwnerLabel).toBe("Ana Lima");
     // Na tabela e no texto, o nome continua inteiro.
     expect(r.items[0]!.ownerLabel).toBe("Ana Carolina Prado Lima");
   });
