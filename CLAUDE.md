@@ -76,7 +76,7 @@ npm run test:all
 
 **Importação não inventa dado.** O `db:seed:jira` traz produtos e tarefas do quadro Roadmap e para por aí: o Jira não guarda receita, custo, meta nem plano, então nada disso é escrito. Os produtos entram com a saúde em "sem medição" — e é essa a resposta certa. Uma importação que preenche o que falta com números plausíveis transforma o painel em ficção com aparência de relatório.
 
-**O deck de status não é desenhado aqui.** A Nimbus tem um Master oficial e um gerador próprio, vendorizados em `vendor/nimbus-deck/`. A rota monta o spec `plano-entregas` e o Master desenha. Redesenhar o slide à mão sai parecido e errado — fonte, margem e paleta trocadas — e "parecido" é exatamente o que um padrão de marca existe para impedir. O gerador avisa (`AVISO:`) quando um texto estoura a caixa: **nenhum aviso é aceitável na entrega**, porque cada um deles é um pedaço de texto cortado no slide.
+**O deck de status não é desenhado aqui.** A rota monta o spec `plano-entregas` e um gerador externo, em `vendor/deck/`, desenha a partir do Master da marca. O diretório vem vazio: template e gerador são material de cada empresa e não acompanham o repositório — o contrato está no README de lá. Redesenhar o slide à mão sai parecido e errado — fonte, margem e paleta trocadas — e "parecido" é exatamente o que um padrão de marca existe para impedir. O gerador avisa (`AVISO:`) quando um texto estoura a caixa: **nenhum aviso é aceitável na entrega**, porque cada um deles é um pedaço de texto cortado no slide.
 
 **Uma exportação não pode discordar da tela.** A tabela de entregas, o PowerPoint e o status em texto saem todos de `engine/status-report.ts`, sobre as tarefas **filtradas na tela**. Exportar um recorte diferente do que o autor acabou de olhar é entregar um status que ninguém conferiu. O que o motor não sabe — o impacto de cada item, o porquê de ele importar — ele não escreve: sai um rascunho que diz, no rodapé, o que falta acrescentar.
 
@@ -115,7 +115,7 @@ db/
   schema.ts          modelo de dados inteiro
   migrations/        SQL versionado gerado pelo drizzle-kit
   seed/              enums, usuários e dados demonstrativos
-    jira-roadmap.json  extrato do quadro Roadmap do Jira (versionado)
+    jira-roadmap.json  extrato de exemplo de um quadro externo (fictício)
     jira.ts            importa esse extrato para o modelo da aplicação
     packages-jira.ts   deriva pacotes de tarefas dos épicos de lançamento
     example.ts         um produto fictício, rotulado como tal no próprio nome

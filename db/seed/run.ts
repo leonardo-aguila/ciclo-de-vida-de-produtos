@@ -5,6 +5,7 @@
  * it twice leaves the same database. Users are preserved unless RESET_USERS=1,
  * so a seed refresh does not log everyone out of their own accounts.
  */
+import { randomInt } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { config } from "dotenv";
 import { sql } from "drizzle-orm";
@@ -28,43 +29,49 @@ config({ path: ".env.local" });
 const url = process.env.MIGRATION_DATABASE_URL ?? process.env.DATABASE_URL;
 if (!url) throw new Error("MIGRATION_DATABASE_URL ou DATABASE_URL não definida.");
 
+/**
+ * As contas que um banco novo ganha.
+ *
+ * A senha é **sorteada a cada seed** e impressa uma vez no terminal, em vez de
+ * ficar escrita aqui. Senha em repositório é senha pública: quem clona o
+ * projeto conhece a credencial de administrador de toda instalação que rodou
+ * este seed, e ninguém se lembra de trocar.
+ */
 export const SEED_USERS = [
-  {
-    name: "Leonardo Aguila",
-    email: "admin@portfolio.local",
-    login: "admin",
-    password: "***SENHA-REMOVIDA***",
-    role: "admin" as const,
-  },
+  { name: "Ana Lima", email: "admin@portfolio.local", login: "admin", role: "admin" as const },
   {
     name: "Marina Duarte",
     email: "marina.duarte@portfolio.local",
     login: "marina",
-    password: "***SENHA-REMOVIDA***",
     role: "product_manager" as const,
   },
   {
     name: "Rafael Nunes",
     email: "rafael.nunes@portfolio.local",
     login: "rafael",
-    password: "***SENHA-REMOVIDA***",
     role: "product_manager" as const,
   },
   {
     name: "Camila Rocha",
     email: "camila.rocha@portfolio.local",
     login: "camila",
-    password: "***SENHA-REMOVIDA***",
     role: "collaborator" as const,
   },
   {
     name: "Paulo Bianchi",
     email: "paulo.bianchi@portfolio.local",
     login: "paulo",
-    password: "***SENHA-REMOVIDA***",
     role: "executive" as const,
   },
 ];
+
+/** Legível ao ditar: sem os caracteres que se confundem (O/0, l/1/I). */
+function generatePassword(): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  const pick = (n: number) =>
+    Array.from({ length: n }, () => alphabet[randomInt(alphabet.length)]).join("");
+  return `${pick(5)}-${pick(5)}-${pick(5)}`;
+}
 
 async function main() {
   const client = postgres(url!, { max: 1 });
@@ -112,8 +119,9 @@ async function main() {
   const existingUsers = await db.select({ id: schema.users.id }).from(schema.users).limit(1);
   if (existingUsers.length === 0) {
     console.log("criando usuários...");
+    const credentials = SEED_USERS.map((u) => ({ ...u, password: generatePassword() }));
     await db.insert(schema.users).values(
-      SEED_USERS.map((u) => ({
+      credentials.map((u) => ({
         name: u.name,
         email: u.email,
         login: u.login,
@@ -122,9 +130,10 @@ async function main() {
         active: true,
       })),
     );
-    console.log("\ncredenciais do seed:");
-    for (const u of SEED_USERS) {
-      console.log(`  ${u.login.padEnd(8)} / ${u.password.padEnd(16)} (${u.role})`);
+    // Impressas uma única vez: não ficam no código nem no banco em claro.
+    console.log("\ncredenciais do seed — anote agora, não são exibidas de novo:");
+    for (const u of credentials) {
+      console.log(`  ${u.login.padEnd(8)} / ${u.password.padEnd(20)} (${u.role})`);
     }
   } else {
     console.log("usuários já existem — preservados (use RESET_USERS=1 para recriar).");

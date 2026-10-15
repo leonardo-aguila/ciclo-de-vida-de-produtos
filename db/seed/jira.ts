@@ -60,14 +60,14 @@ type Extract = {
  * so renaming an epic in Jira does not silently create a second product here.
  */
 const PRODUCTS: Record<string, { code: string; name: string }> = {
-  "DEMO-6": { code: "STUDIO-CREATOR", name: "Nimbus Forge Creator" },
-  "DEMO-131": { code: "AUTOSKY", name: "Atlas" },
-  "DEMO-147": { code: "SKYONE-OS", name: "Nimbus OS" },
-  "DEMO-148": { code: "STUDIO", name: "Forge" },
-  "DEMO-151": { code: "PLATFORM-WEB", name: "Atlas Web" },
+  "DEMO-6": { code: "FORGE-CREATOR", name: "Forge Creator" },
+  "DEMO-131": { code: "ATLAS", name: "Atlas" },
+  "DEMO-147": { code: "NIMBUS-OS", name: "Nimbus OS" },
+  "DEMO-148": { code: "FORGE", name: "Forge" },
+  "DEMO-151": { code: "ATLAS-WEB", name: "Atlas Web" },
   "DEMO-154": { code: "CONSOLE", name: "Nimbus Console" },
   "DEMO-160": { code: "ASTRA", name: "Nimbus Astra" },
-  "DEMO-227": { code: "EASYWEB", name: "QuickSite" },
+  "DEMO-227": { code: "QUICKSITE", name: "QuickSite" },
 };
 
 /**

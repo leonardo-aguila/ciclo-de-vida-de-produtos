@@ -1,9 +1,9 @@
 /**
  * The delivery plan as a PowerPoint deck, in the Nimbus standard.
  *
- * The slide is NOT drawn here. The company has an official Master and an
- * official generator (`vendor/nimbus-deck/`), and this route's job is to turn
- * the product's deliveries into the `plano-entregas` spec that generator eats.
+ * The slide is NOT drawn here. The route turns the product's deliveries into
+ * the `plano-entregas` spec, and an external generator (`vendor/deck/`) draws
+ * it from the brand's own Master.
  * A hand-rebuilt slide comes out close and wrong — wrong fonts, wrong margins,
  * wrong palette — and "close" is exactly what a brand standard exists to
  * prevent.
@@ -32,7 +32,7 @@ export const dynamic = "force-dynamic";
 
 const run = promisify(execFile);
 
-const VENDOR = join(process.cwd(), "vendor", "nimbus-deck");
+const VENDOR = join(process.cwd(), "vendor", "deck");
 const PYTHON = join(process.cwd(), ".venv-pptx", "bin", "python");
 
 /** The spec the official generator reads. One slide per page of columns. */
@@ -150,8 +150,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     // PowerPoint.
     console.error("falha ao gerar o deck de status", error);
     return new Response(
-      "Não foi possível gerar o PowerPoint. Verifique se o Python do projeto está instalado " +
-        "(npm run setup:pptx) e tente de novo.",
+      "Não foi possível gerar o PowerPoint. Confira se o gerador e o template estão em " +
+        "vendor/deck/ (veja o README de lá) e se o Python do projeto foi instalado " +
+        "com npm run setup:pptx.",
       { status: 500, headers: { "Content-Type": "text/plain; charset=utf-8" } },
     );
   } finally {

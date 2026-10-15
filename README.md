@@ -84,7 +84,7 @@ O seed é ancorado no mês atual, então continua atual por mais tempo que passe
 
 ## Importar do Jira
 
-O portfólio pode ser populado a partir do quadro **Roadmap** do projeto `PRD — Produtos` (exemplo.atlassian.net), em vez dos dados demonstrativos:
+O portfólio pode ser populado a partir de um quadro externo — um Roadmap do Jira, por exemplo — em vez dos dados demonstrativos:
 
 ```bash
 npm run db:seed:jira
@@ -92,7 +92,9 @@ npm run db:seed:jira
 
 O comando **apaga os dados de produto** (produtos, tarefas, metas, finanças, planos, insights, comentários, decisões e snapshots) e reescreve a partir do extrato em `db/seed/jira-roadmap.json`. Configuração — enums, pacotes de tarefas, settings — e as contas de acesso permanecem.
 
-**Escopo:** exatamente o que o quadro mostra. O Roadmap tem filtro próprio, `labels IN (lancamento-2027, lancamento-2028)`, e são esses 108 itens que entram: 8 épicos de lançamento e os 100 itens sob eles.
+**Escopo:** exatamente o que o quadro mostra. O extrato de exemplo veio de um Roadmap filtrado por `labels IN (lancamento-2028, lancamento-2029)`: 8 épicos de lançamento e os 100 itens sob eles.
+
+O arquivo `db/seed/jira-roadmap.json` que acompanha o repositório é **fictício** — produtos, pessoas e datas inventados. Para importar dados de verdade, substitua-o por um extrato do seu próprio quadro, com a mesma forma.
 
 | No Jira | No portfólio |
 |---|---|
@@ -122,8 +124,8 @@ Transforma dois lançamentos reais em pacotes reaplicáveis, com as datas virada
 
 | Pacote | Origem | Modelos | Âncora | Para quando |
 |---|---|---|---|---|
-| **Novo Produto** | DEMO-160, Nimbus Astra 2027 | 28 | Data de início do produto | Concepção — go-to-market de algo que ainda não existe |
-| **Nova Release** | DEMO-148, Studio 2027 | 11 | Lançamento previsto | Crescimento — ciclo de uma versão nova |
+| **Novo Produto** | DEMO-160, Nimbus Astra 2028 | 28 | Data de início do produto | Concepção — go-to-market de algo que ainda não existe |
+| **Nova Release** | DEMO-148, Forge 2028 | 11 | Lançamento previsto | Crescimento — ciclo de uma versão nova |
 
 Os dois são construídos de pontas opostas. Um produto que ainda não existe não tem data de lançamento para contar de trás, então o plano corre para frente a partir do início. Uma release tem: o dia zero é a subida da versão, o que vem antes fica negativo (`T-45 · atualizar documentação`) e o que vem depois, positivo (`D+25 · retrospectiva e desligamento da versão anterior`).
 
