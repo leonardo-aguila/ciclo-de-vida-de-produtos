@@ -1,15 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
-  type ReportTask,
   bucketize,
-  buildPlaybook,
+  compactPerson,
+  deliveryName,
   buildStatusReport,
   buildWrittenUpdate,
   classify,
-  compactPerson,
   countsLine,
   dLabelOf,
-  deliveryName,
+  type ReportTask,
 } from "@/lib/engine/status-report";
 
 const DONE = ["done"];
@@ -21,7 +20,6 @@ function task(overrides: Partial<ReportTask> & { id: string; name: string }): Re
   return {
     assigneeName: null,
     categoryLabel: null,
-    startDate: null,
     dueDate: null,
     status: "backlog",
     description: null,
@@ -390,78 +388,5 @@ describe("status escrito", () => {
   it("explica a falta de âncora em vez de omiti-la", () => {
     const sem = buildWrittenUpdate(report([task({ id: "1", name: "X" })], null), TODAY);
     expect(sem).toContain("Nenhuma entrega está marcada como o evento de lançamento");
-  });
-});
-
-describe("playbook: raias de área × janelas de prazo", () => {
-  const base = (over: Partial<ReportTask> & { id: string; name: string }) =>
-    task({ startDate: over.dueDate ?? null, ...over });
-
-  const r = report([
-    base({ id: "1", name: "Tese", dueDate: "2026-09-14", categoryLabel: "Produto", status: "done" }),
-    base({ id: "2", name: "Preço", dueDate: "2026-09-28", categoryLabel: "Produto", status: "doing" }),
-    base({ id: "3", name: "Sales kit", dueDate: "2026-10-19", categoryLabel: "Marketing" }),
-    base({ id: "4", name: "Contrato", dueDate: "2026-10-01", categoryLabel: "Jurídico" }),
-    base({ id: "5", name: "Evento", dueDate: LAUNCH, categoryLabel: "Marketing" }),
-    base({ id: "6", name: "Balanço", dueDate: "2026-11-20", categoryLabel: "Produto" }),
-  ]);
-  const pb = buildPlaybook(r);
-
-  it("sempre reserva uma coluna para o dia do lançamento", () => {
-    const d0 = pb.columns.filter((c) => c.isLaunch);
-    expect(d0).toHaveLength(1);
-    expect(d0[0]!.period).toBe("D0");
-  });
-
-  it("cada entrega cai em exatamente uma coluna, mesmo com bordas repetidas", () => {
-    const todas = pb.lanes.flatMap((l) => l.cards);
-    expect(todas).toHaveLength(6);
-    for (const card of todas) {
-      expect(card.endColumn).toBeGreaterThanOrEqual(0);
-      expect(card.endColumn).toBeLessThan(pb.columns.length);
-      expect(card.startColumn).toBeLessThanOrEqual(card.endColumn);
-    }
-  });
-
-  it("agrupa por área e ordena da raia mais cheia para a mais vazia", () => {
-    expect(pb.lanes.map((l) => l.area)).toEqual(["Produto", "Marketing", "Jurídico"]);
-    expect(pb.lanes[0]!.cards).toHaveLength(3);
-  });
-
-  it("cai para o responsável quando a entrega não tem área", () => {
-    // É o caso das tarefas importadas de um quadro externo, que não trazem
-    // categoria: uma raia única "Sem área" seria uma lista, não um playbook.
-    const semArea = buildPlaybook(
-      report([base({ id: "1", name: "X", dueDate: "2026-10-01", assigneeName: "Marina" })]),
-    );
-    expect(semArea.lanes[0]!.area).toBe("Marina");
-  });
-
-  it("empilha em linhas os cards da mesma raia que se encostam", () => {
-    const mesmaJanela = buildPlaybook(
-      report(
-        Array.from({ length: 3 }, (_, i) =>
-          base({ id: String(i), name: `T${i}`, dueDate: "2026-10-01", categoryLabel: "Produto" }),
-        ),
-      ),
-    );
-    expect(mesmaJanela.lanes[0]!.rows).toBe(3);
-    expect(mesmaJanela.lanes[0]!.cards.map((c) => c.row)).toEqual([0, 1, 2]);
-  });
-
-  it("o card atravessa da coluna do início até a do prazo", () => {
-    const largo = buildPlaybook(
-      report([
-        base({ id: "1", name: "Curto", dueDate: "2026-09-14", categoryLabel: "A" }),
-        base({ id: "2", name: "Longo", dueDate: "2026-11-20", startDate: "2026-09-14",
-          categoryLabel: "A" }),
-      ]),
-    );
-    const longo = largo.lanes[0]!.cards.find((c) => c.item.name === "Longo")!;
-    expect(longo.endColumn).toBeGreaterThan(longo.startColumn);
-  });
-
-  it("devolve grade vazia quando nenhuma entrega tem prazo", () => {
-    expect(buildPlaybook(report([base({ id: "1", name: "X" })]))).toEqual({ columns: [], lanes: [] });
   });
 });
