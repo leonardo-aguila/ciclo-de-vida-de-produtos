@@ -520,80 +520,166 @@ function paginate<T>(columns: T[]): T[][] {
 /* Raias por área                                                             */
 /* -------------------------------------------------------------------------- */
 
-export type AreaLane = {
-  area: string;
-  counts: StatusReport["counts"];
-  /** Uma frase factual para o título da raia. */
-  headline: string;
-  pages: DeckColumn[][];
+/** Uma célula da grade: as entregas de uma área numa janela de prazo. */
+export type GridCell = {
+  texto: string;
+  /** A cor do ponto: o pior estado das entregas da célula. */
+  status: "verde" | "amarelo" | "vermelho" | "cinza";
+} | "";
+
+export type AreaGrid = {
+  /** Cabeçalho: "Área" e as janelas de prazo. */
+  colunas: string[];
+  /** Uma linha por área: o nome e uma célula por janela. */
+  linhas: (string | GridCell)[][];
+  legenda: string;
 };
 
 /** O rótulo das entregas que ninguém classificou. */
 const NO_AREA = "Sem área";
 
 /**
- * As entregas de cada área, como uma raia que atravessa o mesmo eixo de tempo.
+ * Limites da tabela do Master: acima disso ele avisa que não se lê.
  *
- * O Master empilha cards em colunas de prazo e não tem linha que atravesse as
- * colunas — desenhar a grade à mão já foi tentado e sai com fonte, margem e
- * paleta erradas. A raia aqui é um slide: **as mesmas colunas** do slide
- * consolidado, com os mesmos cabeçalhos, mostrando só os cards daquela área.
- * Como o eixo não muda de um slide para o outro, as raias empilham e leem
- * como as linhas de uma grade — e a coluna que fica vazia numa área é
- * informação, não falha: é a janela em que aquela área não entrega nada.
- *
- * Com uma área só (ou nenhuma), a raia repetiria o consolidado inteiro: não
- * sai nada.
+ * A altura de uma linha é a da célula mais cheia dela, então é uma célula
+ * sobrecarregada que estoura a página inteira — daí o teto por célula. Quem
+ * mede de verdade é o gerador: ele avisa (`AVISO: tabela com X" de altura`)
+ * quando não coube, e nenhum aviso é aceitável na entrega.
  */
-export function buildAreaLanes(report: StatusReport): AreaLane[] {
+const GRID = { columns: 6, rows: 10, chars: 28, perCell: 5 };
+
+/** Pior primeiro: é o que decide a cor do ponto da célula. */
+const GRID_SEVERITY: StatusKind[] = ["overdue", "doing", "todo", "done"];
+
+const GRID_STATUS: Record<StatusKind, Exclude<GridCell, "">["status"]> = {
+  overdue: "vermelho",
+  doing: "amarelo",
+  todo: "cinza",
+  done: "verde",
+};
+
+/**
+ * Reparte as entregas em no máximo seis janelas de prazo.
+ *
+ * `bucketize` corta por número de cards, que é o limite do slide de cards;
+ * aqui o limite é de **colunas**, porque a grade inteira tem de caber numa
+ * página. Começa pelo tamanho que daria seis janelas e afrouxa até caber —
+ * a regra de nunca partir um mesmo prazo em duas colunas continua valendo, e
+ * é ela que às vezes devolve uma janela a mais.
+ */
+function gridBuckets(items: ReportItem[]): ReportBucket[] {
+  let perBucket = Math.max(1, Math.ceil(items.length / GRID.columns));
+  let buckets = bucketize(items, perBucket);
+  while (buckets.length > GRID.columns && perBucket < items.length) {
+    perBucket += 1;
+    buckets = bucketize(items, perBucket);
+  }
+  return buckets.slice(0, GRID.columns);
+}
+
+/** O nome que cabe numa célula estreita. */
+function gridText(name: string): string {
+  return deckText(name, GRID.chars);
+}
+
+/**
+ * O plano inteiro numa página: prazos em cima, áreas à esquerda.
+ *
+ * Esta é a grade que o layout de cards não sabe fazer — e desenhá-la à mão já
+ * foi tentado uma vez (revertido): sai com fonte, margem e paleta trocadas.
+ * O Master tem a própria grade, a `tabela`, e é ela que é usada aqui: a
+ * linha é a raia da área, a coluna é a janela de prazo.
+ *
+ * Duas limitações da célula, e o que foi feito com elas:
+ *
+ * - **Não há quebra de linha dentro da célula** (o gerador escreve a célula
+ *   num parágrafo só), então as entregas vêm separadas por " · " em vez de
+ *   empilhadas.
+ * - **O ponto colorido é um por célula**, não um por entrega. Ele mostra o
+ *   pior estado da célula, e a entrega vencida sai em negrito — assim uma
+ *   célula com uma concluída e uma vencida não esconde nenhuma das duas. A
+ *   legenda diz as duas coisas.
+ *
+ * Com uma área só (ou nenhuma), a grade teria uma linha e repetiria o slide
+ * consolidado: não sai nada.
+ */
+export function buildAreaGrid(report: StatusReport): AreaGrid | null {
   const areaOf = (item: ReportItem) => item.categoryLabel?.trim() || NO_AREA;
 
-  const order: string[] = [];
-  const seen = new Set<string>();
-  for (const item of report.items) {
-    const area = areaOf(item);
-    if (!seen.has(area)) {
-      seen.add(area);
-      order.push(area);
-    }
+  // `report.items` já vem por prazo, então a ordem de aparição é a ordem em
+  // que cada área entra no plano. "Sem área" fecha a lista.
+  const areas = [...new Set(report.items.map(areaOf))].sort((a, b) =>
+    a === NO_AREA ? 1 : b === NO_AREA ? -1 : 0,
+  );
+  if (areas.length < 2) return null;
+
+  const buckets = gridBuckets(report.items);
+  const rows = groupRows(areas, areaOf, report);
+
+  return {
+    colunas: ["Área", ...buckets.map((bucket) => bucket.label)],
+    linhas: rows.map(({ label, items }) => [
+      label,
+      ...buckets.map((bucket): GridCell => {
+        const inCell = bucket.items.filter((item) => items.has(item.id));
+        if (inCell.length === 0) return "";
+        const worst = GRID_SEVERITY.find((kind) =>
+          inCell.some((item) => item.kind === kind),
+        )!;
+        // A vencida primeiro: se a célula não couber inteira, o que sobra na
+        // página é o que precisa de decisão.
+        const ordered = [...inCell].sort(
+          (a, b) => GRID_SEVERITY.indexOf(a.kind) - GRID_SEVERITY.indexOf(b.kind),
+        );
+        const shown = ordered.slice(0, GRID.perCell);
+        const hidden = ordered.length - shown.length;
+        return {
+          // A vencida em negrito: o ponto da célula já é o pior estado, mas
+          // sem isso uma célula vermelha não diz *qual* entrega está vencida.
+          texto:
+            shown
+              .map((item) =>
+                item.kind === "overdue" ? `**${gridText(item.name)}**` : gridText(item.name),
+              )
+              .join(" · ") + (hidden > 0 ? ` · +${hidden}` : ""),
+          status: GRID_STATUS[worst],
+        };
+      }),
+    ]),
+    legenda:
+      "● verde = concluída · amarelo = em curso · vermelho = vencida · cinza = a iniciar. " +
+      "O ponto é o pior estado da célula; a vencida vem primeiro e em negrito, e \"+N\" é o que não coube.",
+  };
+}
+
+/**
+ * As linhas da grade, com as áreas excedentes reunidas na última.
+ *
+ * Acima de dez linhas o Master avisa que a tabela não se lê, e ele tem razão.
+ * As que saem são as **menores**: juntar duas áreas de uma entrega cada custa
+ * menos do que esconder a área que carrega metade do plano.
+ */
+function groupRows(
+  areas: string[],
+  areaOf: (item: ReportItem) => string,
+  report: StatusReport,
+): { label: string; items: Set<string> }[] {
+  const idsOf = (names: string[]) =>
+    new Set(report.items.filter((item) => names.includes(areaOf(item))).map((item) => item.id));
+
+  if (areas.length <= GRID.rows) {
+    return areas.map((area) => ({ label: area, items: idsOf([area]) }));
   }
-  if (order.length < 2) return [];
 
-  // `report.items` já vem ordenado por prazo, então a ordem de aparição é a
-  // ordem em que cada área entra no plano. "Sem área" fecha a lista.
-  order.sort((a, b) => (a === NO_AREA ? 1 : b === NO_AREA ? -1 : 0));
+  const size = (area: string) => report.items.filter((item) => areaOf(item) === area).length;
+  const smallest = [...areas].sort((a, b) => size(a) - size(b));
+  const merged = new Set(smallest.slice(0, areas.length - GRID.rows + 1));
+  const kept = areas.filter((area) => !merged.has(area));
 
-  const plans = paginate(planColumns(report.buckets));
-
-  return order.map((area) => {
-    const items = report.items.filter((item) => areaOf(item) === area);
-    const counts = {
-      total: items.length,
-      done: items.filter((item) => item.kind === "done").length,
-      doing: items.filter((item) => item.kind === "doing").length,
-      todo: items.filter((item) => item.kind === "todo").length,
-      overdue: items.filter((item) => item.kind === "overdue").length,
-    };
-    return {
-      area,
-      counts,
-      headline: buildHeadline(area, counts, report.d0, report.daysToLaunch),
-      pages: plans
-        .map((page) =>
-          page.map((plan) =>
-            // Na raia a área é o slide; quem o card nomeia passa a ser a
-            // pessoa, que é a informação que ainda falta ali.
-            renderColumn(
-              plan,
-              plan.items.filter((item) => areaOf(item) === area),
-              (item) => (item.assigneeName ? compactPerson(item.assigneeName) : "—"),
-            ),
-          ),
-        )
-        // Uma página inteira sem nenhum card da área não diz nada: some.
-        .filter((page) => page.some((column) => column.entregas.length > 0)),
-    };
-  });
+  return [
+    ...kept.map((area) => ({ label: area, items: idsOf([area]) })),
+    { label: `Demais áreas (${merged.size})`, items: idsOf([...merged]) },
+  ];
 }
 
 /** Domingo que fecha a semana da data, para "esta e a próxima semana". */
@@ -738,15 +824,15 @@ export function buildWrittenUpdate(report: StatusReport, today: string): string 
 /* -------------------------------------------------------------------------- */
 
 /**
- * O spec que o gerador oficial lê: o consolidado e, atrás dele, uma raia por
- * área.
+ * O spec que o gerador oficial lê: o plano em cards e, atrás dele, a grade de
+ * raias numa página só.
  *
  * Mora no motor, não na rota, porque é cálculo puro — e porque um teste que
  * precisa subir banco para conferir o rodapé de um slide não é escrito.
  */
 export function buildDeckSpec(productName: string, report: StatusReport, today: string) {
   const pages = buildDeckColumns(report);
-  const lanes = buildAreaLanes(report);
+  const grid = buildAreaGrid(report);
   const anchorNote = report.d0TaskName
     ? `D = dias úteis até o D0 (${report.d0TaskName}, ${report.d0Label}).`
     : report.d0Label
@@ -757,31 +843,35 @@ export function buildDeckSpec(productName: string, report: StatusReport, today: 
     `${anchorNote} Feriados não são considerados. ` +
     `Card verde = concluída; vermelho = vencida. Gerado em ${formatDate(today)}.`;
 
-  // Uma raia por área, depois do consolidado. O Master empilha cards em
-  // colunas de prazo e não tem linha que atravesse as colunas, então a raia é
-  // um slide com as mesmas colunas e só as entregas daquela área — e não uma
-  // grade redesenhada à mão, que sai com fonte e margem trocadas.
-  const laneSlides = lanes.flatMap((lane) =>
-    lane.pages.map((columns, index) => ({
-      layout: "plano-entregas",
-      eyebrow: `${productName} · Raia · ${lane.area}`,
-      titulo:
-        lane.headline + (lane.pages.length > 1 ? ` (${index + 1} de ${lane.pages.length})` : ""),
-      resumo_info: [`área: ${lane.area}`],
-      alertas:
-        lane.counts.overdue > 0
-          ? [
-              `${lane.counts.overdue} ${lane.counts.overdue === 1 ? "entrega vencida" : "entregas vencidas"}`,
-            ]
-          : [],
-      colunas: columns,
-      nota,
-    })),
-  );
+  // Todas as raias numa página: prazos em cima, áreas à esquerda. É a
+  // `tabela` do próprio Master, não uma grade redesenhada à mão.
+  // Os dois layouts não têm os mesmos campos, e a mistura é a forma do JSON
+  // que o gerador lê — não de um tipo nosso.
+  type Slide = Record<string, unknown>;
 
-  return {
-    rodape: `${productName} · Documento interno`,
-    slides: pages.map((columns, index) => ({
+  const gridSlide: Slide[] = grid
+    ? [
+        {
+          layout: "tabela",
+          eyebrow: `${productName} · Raias por área`,
+          titulo: report.headline,
+          colunas: grid.colunas,
+          linhas: grid.linhas,
+          // A primeira coluna é nome de área e precisa de mais largura que
+          // uma janela de prazo.
+          larguras: [0.9, ...grid.colunas.slice(1).map(() => 1)],
+          fonte: 9,
+          // A legenda vai pela nota do Master, não pelo campo `legenda`: esse
+          // é desenhado rente à borda de baixo e encosta na última linha da
+          // tabela quando ela ocupa a página inteira — que é o caso aqui.
+          nota:
+            `${grid.legenda} ${anchorNote} Feriados não são considerados. ` +
+            `${productName} · Documento interno.`,
+        },
+      ]
+    : [];
+
+  const planSlides: Slide[] = pages.map((columns, index) => ({
       layout: "plano-entregas",
       eyebrow: `${productName} · Plano de entregas`,
       titulo:
@@ -803,8 +893,12 @@ export function buildDeckSpec(productName: string, report: StatusReport, today: 
               `${report.counts.overdue} ${report.counts.overdue === 1 ? "entrega vencida" : "entregas vencidas"}`,
             ]
           : [],
-      colunas: columns,
-      nota,
-    })).concat(laneSlides),
+    colunas: columns,
+    nota,
+  }));
+
+  return {
+    rodape: `${productName} · Documento interno`,
+    slides: [...planSlides, ...gridSlide],
   };
 }

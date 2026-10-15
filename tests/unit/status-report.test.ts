@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildAreaLanes,
-  buildDeckColumns,
+  buildAreaGrid,
   bucketize,
   compactPerson,
   deliveryName,
@@ -393,11 +392,10 @@ describe("status escrito", () => {
   });
 });
 
-describe("raias por área", () => {
-  // Oito entregas em prazos distintos: acima das seis por coluna, então o
-  // consolidado quebra em duas colunas e a raia tem onde ficar vazia.
+describe("raias por área numa página", () => {
+  // Oito entregas em prazos distintos e quatro áreas, uma delas inexistente.
   const tasks = [
-    task({ id: "1", name: "Criar tese", categoryLabel: "Marketing", dueDate: "2026-10-12", assigneeName: "Ana Carolina Prado Lima" }),
+    task({ id: "1", name: "Criar tese", categoryLabel: "Marketing", dueDate: "2026-10-12", status: "done" }),
     task({ id: "2", name: "Definir preço", categoryLabel: "Comercial", dueDate: "2026-10-13" }),
     task({ id: "3", name: "Aprovar verba", categoryLabel: "Marketing", dueDate: "2026-10-14" }),
     task({ id: "4", name: "Montar proposta", categoryLabel: "Comercial", dueDate: "2026-10-15" }),
@@ -407,61 +405,79 @@ describe("raias por área", () => {
     task({ id: "8", name: "Tarefa órfã", dueDate: "2026-10-21" }),
   ];
 
-  it("usa exatamente as colunas do slide consolidado", () => {
-    // É isso que faz a raia ser raia: o eixo de tempo não muda de um slide
-    // para o outro, então as linhas empilham e leem como uma grade.
-    const built = report(tasks);
-    const header = (columns: { periodo: string; nome: string }[]) =>
-      columns.map((column) => `${column.nome}·${column.periodo}`);
-    const consolidated = buildDeckColumns(built).map(header);
+  const cells = (grid: NonNullable<ReturnType<typeof buildAreaGrid>>) =>
+    grid.linhas.flatMap((row) => row.slice(1)).filter((cell) => cell !== "");
 
-    for (const lane of buildAreaLanes(built)) {
-      expect(lane.pages.map(header)).toEqual(consolidated);
-    }
+  it("cabe numa página: no máximo seis janelas e uma linha por área", () => {
+    const grid = buildAreaGrid(report(tasks))!;
+    // A primeira coluna é o nome da área; as demais são janelas de prazo.
+    expect(grid.colunas[0]).toBe("Área");
+    expect(grid.colunas.length).toBeLessThanOrEqual(7);
+    expect(grid.linhas.map((row) => row[0])).toEqual([
+      "Marketing",
+      "Comercial",
+      "Jurídico",
+      "Sem área",
+    ]);
   });
 
-  it("distribui cada entrega em uma única raia", () => {
-    const lanes = buildAreaLanes(report(tasks));
-    const cards = lanes.flatMap((lane) =>
-      lane.pages.flatMap((page) => page.flatMap((column) => column.entregas.map((e) => e.texto))),
+  it("não perde nenhuma entrega pelo caminho", () => {
+    const grid = buildAreaGrid(report(tasks))!;
+    const nomes = cells(grid)
+      .flatMap((cell) => (typeof cell === "string" ? [] : cell.texto.split(" · ")))
+      .map((nome) => nome.replace(/\*\*/g, ""));
+    expect(nomes).toHaveLength(tasks.length);
+    expect(nomes).toContain("Tarefa órfã");
+  });
+
+  it("o ponto da célula é o pior estado dela, e a vencida sai em negrito", () => {
+    // Duas entregas de Marketing no mesmo prazo: uma concluída e uma vencida.
+    const grid = buildAreaGrid(
+      report([
+        task({ id: "1", name: "Concluída", categoryLabel: "Marketing", dueDate: "2026-10-01", status: "done" }),
+        task({ id: "2", name: "Vencida", categoryLabel: "Marketing", dueDate: "2026-10-01" }),
+        task({ id: "3", name: "Outra área", categoryLabel: "Comercial", dueDate: "2026-10-02" }),
+      ]),
+    )!;
+    const marketing = grid.linhas[0]!.slice(1).find((cell) => cell !== "");
+    expect(marketing).toMatchObject({ status: "vermelho" });
+    // Sem o negrito, a célula vermelha não diria *qual* das duas venceu — e a
+    // vencida vem primeiro porque é ela que some se a célula não couber.
+    expect((marketing as { texto: string }).texto).toBe("**Vencida** · Concluída");
+  });
+
+  it("deixa a célula vazia quando a área não entrega nada na janela", () => {
+    const grid = buildAreaGrid(report(tasks))!;
+    const juridico = grid.linhas.find((row) => row[0] === "Jurídico")!;
+    expect(juridico.slice(1).filter((cell) => cell === "").length).toBeGreaterThan(0);
+    expect(juridico.slice(1).filter((cell) => cell !== "")).toHaveLength(1);
+  });
+
+  it("junta as áreas menores quando passam de dez linhas", () => {
+    // Doze áreas: a maior tem de sobreviver inteira, as menores viram uma só.
+    const many = Array.from({ length: 12 }, (_, index) =>
+      task({
+        id: `a${index}`,
+        name: `Entrega ${index}`,
+        categoryLabel: `Área ${index}`,
+        dueDate: `2026-10-${String(12 + index).padStart(2, "0")}`,
+      }),
     );
-    expect(cards).toHaveLength(tasks.length);
-    expect(new Set(cards).size).toBe(tasks.length);
+    many.push(
+      task({ id: "big", name: "Entrega grande", categoryLabel: "Área 0", dueDate: "2026-11-30" }),
+    );
+    const grid = buildAreaGrid(report(many))!;
+    expect(grid.linhas).toHaveLength(10);
+    expect(grid.linhas.map((row) => row[0])).toContain("Área 0");
+    expect(grid.linhas[9]![0]).toBe("Demais áreas (3)");
   });
 
-  it("deixa a coluna vazia quando a área não entrega nada naquela janela", () => {
-    const juridico = buildAreaLanes(report(tasks)).find((lane) => lane.area === "Jurídico")!;
-    const counts = juridico.pages[0]!.map((column) => column.entregas.length);
-    expect(counts).toContain(0);
-    expect(counts.reduce((a, b) => a + b, 0)).toBe(1);
-  });
-
-  it("fecha a lista com as entregas sem área", () => {
-    const lanes = buildAreaLanes(report(tasks));
-    expect(lanes[lanes.length - 1]!.area).toBe("Sem área");
-  });
-
-  it("nomeia a pessoa no card, já que a área virou o slide", () => {
-    // No consolidado o card nomeia a área; na raia ela é redundante.
-    const marketing = buildAreaLanes(report(tasks)).find((lane) => lane.area === "Marketing")!;
-    const donos = marketing.pages[0]!.flatMap((column) => column.entregas.map((e) => e.dono));
-    expect(donos).toContain("Ana Lima");
-    expect(donos).not.toContain("Marketing");
-  });
-
-  it("não produz raia nenhuma quando só há uma área", () => {
-    // A raia repetiria o consolidado inteiro.
+  it("não produz grade quando só há uma área", () => {
+    // A grade teria uma linha e repetiria o slide consolidado.
     const single = report([
       task({ id: "1", name: "Criar tese", categoryLabel: "Marketing", dueDate: "2026-10-20" }),
       task({ id: "2", name: "Aprovar verba", categoryLabel: "Marketing", dueDate: "2026-10-27" }),
     ]);
-    expect(buildAreaLanes(single)).toEqual([]);
-  });
-
-  it("conta no singular a área com uma entrega só", () => {
-    const lanes = buildAreaLanes(report(tasks));
-    const juridico = lanes.find((lane) => lane.area === "Jurídico")!;
-    expect(juridico.headline).toContain("de 1 entrega concluída");
-    expect(juridico.headline).not.toContain("1 entregas");
+    expect(buildAreaGrid(single)).toBeNull();
   });
 });
