@@ -1,0 +1,1997 @@
+{
+ "source": {
+  "site": "https://exemplo.atlassian.net",
+  "project": "DEMO — Produtos",
+  "board": "Roadmap (quadro 101, timeline)",
+  "boardFilter": "labels IN (lancamento-2028, lancamento-2029)",
+  "extractedAt": "2027-10-03",
+  "note": "Extrato de exemplo: produtos, pessoas e datas fictícios. Substitua por um extrato do seu próprio quadro para importar dados reais."
+ },
+ "issues": [
+  {
+   "key": "DEMO-6",
+   "summary": "Lançamento Forge Creator 2028",
+   "type": "Épico",
+   "status": "Concluído",
+   "statusCategory": "done",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": null,
+   "created": "2027-06-06",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": null,
+   "url": "https://exemplo.atlassian.net/browse/DEMO-6"
+  },
+  {
+   "key": "DEMO-131",
+   "summary": "Lançamento Atlas 2028",
+   "type": "Épico",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Bruno Carvalho",
+   "assigneeEmail": "bruno.carvalho@exemplo.com.br",
+   "startDate": "2027-09-14",
+   "dueDate": "2028-01-29",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028",
+    "modelo-lancamento"
+   ],
+   "parentKey": null,
+   "url": "https://exemplo.atlassian.net/browse/DEMO-131"
+  },
+  {
+   "key": "DEMO-136",
+   "summary": "[Atlas 2028] F1 · Atualizar Kit de habilitação comercial",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-09-14",
+   "dueDate": "2027-12-06",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-131",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-136"
+  },
+  {
+   "key": "DEMO-137",
+   "summary": "[Atlas 2028] F1 · Atualizar documentação, release notes e guia de migração",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-09-14",
+   "dueDate": "2027-12-06",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-131",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-137"
+  },
+  {
+   "key": "DEMO-138",
+   "summary": "[Atlas 2028] F2 · Realizar roadshow interno — semana 1: liderança e time técnico",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-07",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028",
+    "roadshow"
+   ],
+   "parentKey": "DEMO-131",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-138"
+  },
+  {
+   "key": "DEMO-139",
+   "summary": "[Atlas 2028] F2 · Realizar roadshow interno — semana 2: vendas, canais, CS e suporte",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-14",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028",
+    "roadshow"
+   ],
+   "parentKey": "DEMO-131",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-139"
+  },
+  {
+   "key": "DEMO-140",
+   "summary": "[Atlas 2028] F2 · Atualizar runbook de suporte, FAQ e macros de atendimento",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-14",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-131",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-140"
+  },
+  {
+   "key": "DEMO-141",
+   "summary": "[Atlas 2028] F3 · Realizar rollout em ondas com feature flag e kill switch",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2028-01-14",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-131",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-141"
+  },
+  {
+   "key": "DEMO-142",
+   "summary": "[Atlas 2028] F3 · Definir plano de comunicação por priorização (T-90 a D+7)",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-21",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-131",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-142"
+  },
+  {
+   "key": "DEMO-143",
+   "summary": "[Atlas 2028] F3 · Realizar war rooms dos primeiros dias",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-19",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-131",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-143"
+  },
+  {
+   "key": "DEMO-144",
+   "summary": "[Atlas 2028] F4 · Acompanhar painel de adoção da versão",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-27",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-131",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-144"
+  },
+  {
+   "key": "DEMO-145",
+   "summary": "[Atlas 2028] F4 · Finalizar retrospectiva e desligamento da versão anterior",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2028-01-29",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028",
+    "modelo-lancamento"
+   ],
+   "parentKey": "DEMO-131",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-145"
+  },
+  {
+   "key": "DEMO-146",
+   "summary": "[Atlas 2028] F1 · Confeccionar vídeos curtos por tarefa",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-09-14",
+   "dueDate": "2027-12-06",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-131",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-146"
+  },
+  {
+   "key": "DEMO-147",
+   "summary": "Lançamento Nimbus OS 2028",
+   "type": "Épico",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Carla Mendes",
+   "assigneeEmail": "carla.mendes@exemplo.com.br",
+   "startDate": "2027-09-19",
+   "dueDate": "2027-11-20",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": null,
+   "url": "https://exemplo.atlassian.net/browse/DEMO-147"
+  },
+  {
+   "key": "DEMO-148",
+   "summary": "Lançamento Forge 2028",
+   "type": "Épico",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Diego Rocha",
+   "assigneeEmail": "diego.rocha@exemplo.com.br",
+   "startDate": "2027-09-24",
+   "dueDate": "2028-01-29",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": null,
+   "url": "https://exemplo.atlassian.net/browse/DEMO-148"
+  },
+  {
+   "key": "DEMO-151",
+   "summary": "Lançamento Atlas Web 2028",
+   "type": "Épico",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Bruno Carvalho",
+   "assigneeEmail": "bruno.carvalho@exemplo.com.br",
+   "startDate": "2027-09-24",
+   "dueDate": "2028-01-29",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": null,
+   "url": "https://exemplo.atlassian.net/browse/DEMO-151"
+  },
+  {
+   "key": "DEMO-154",
+   "summary": "Lançamento Nimbus Console 2028",
+   "type": "Épico",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Bruno Carvalho",
+   "assigneeEmail": "bruno.carvalho@exemplo.com.br",
+   "startDate": "2027-10-30",
+   "dueDate": "2028-01-29",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": null,
+   "url": "https://exemplo.atlassian.net/browse/DEMO-154"
+  },
+  {
+   "key": "DEMO-160",
+   "summary": "Lançamento Nimbus Astra 2028",
+   "type": "Épico",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Diego Rocha",
+   "assigneeEmail": "diego.rocha@exemplo.com.br",
+   "startDate": "2027-09-10",
+   "dueDate": "2027-12-20",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": null,
+   "url": "https://exemplo.atlassian.net/browse/DEMO-160"
+  },
+  {
+   "key": "DEMO-163",
+   "summary": "[Nimbus OS 2028] F1 · Kit de habilitação comercial",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-09-19",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-147",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-163"
+  },
+  {
+   "key": "DEMO-166",
+   "summary": "[Nimbus OS 2028] F1 · Documentação, release notes e guia de migração",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-09-19",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-147",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-166"
+  },
+  {
+   "key": "DEMO-168",
+   "summary": "[Forge 2028] F1 · Atualizar Kit de habilitação comercial",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-02",
+   "dueDate": "2027-11-27",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-148",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-168"
+  },
+  {
+   "key": "DEMO-170",
+   "summary": "[Nimbus OS 2028] F1 · Vídeos curtos por tarefa",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-09-19",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-147",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-170"
+  },
+  {
+   "key": "DEMO-172",
+   "summary": "[Forge 2028] F1 · Atualizar documentação, release notes e guia de migração",
+   "type": "Tarefa",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-09-25",
+   "dueDate": "2027-11-13",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-148",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-172"
+  },
+  {
+   "key": "DEMO-175",
+   "summary": "[Nimbus OS 2028] F2 · Roadshow interno — semana 1: liderança e time técnico",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-09-28",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028",
+    "roadshow"
+   ],
+   "parentKey": "DEMO-147",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-175"
+  },
+  {
+   "key": "DEMO-176",
+   "summary": "[Atlas Web 2028] F1 · Atualizar Kit de habilitação comercial",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-11-27",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-151",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-176"
+  },
+  {
+   "key": "DEMO-177",
+   "summary": "[Atlas Web 2028] F1 · Atualizar documentação, release notes e guia de migração",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-11-27",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-151",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-177"
+  },
+  {
+   "key": "DEMO-179",
+   "summary": "[Nimbus OS 2028] F2 · Roadshow interno — semana 2: vendas, canais, CS e suporte",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-10-05",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028",
+    "roadshow"
+   ],
+   "parentKey": "DEMO-147",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-179"
+  },
+  {
+   "key": "DEMO-180",
+   "summary": "[Console 2028] F1 · Atualizar Kit de habilitação comercial",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-11-27",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-154",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-180"
+  },
+  {
+   "key": "DEMO-181",
+   "summary": "[Forge 2028] F1 · Confeccionar vídeos curtos por tarefa",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-02",
+   "dueDate": "2027-11-19",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-148",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-181"
+  },
+  {
+   "key": "DEMO-183",
+   "summary": "[Nimbus OS 2028] F2 · Runbook de suporte, FAQ e macros de atendimento",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-10-05",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-147",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-183"
+  },
+  {
+   "key": "DEMO-184",
+   "summary": "[Atlas Web 2028] F1 · Confeccionar vídeos curtos por tarefa",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-11-27",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-151",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-184"
+  },
+  {
+   "key": "DEMO-185",
+   "summary": "[Console 2028] F1 · Atualizar documentação, release notes e guia de migração",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-11-27",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-154",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-185"
+  },
+  {
+   "key": "DEMO-186",
+   "summary": "[Forge 2028] F2 · Realizar roadshow interno — semana 1: liderança e time técnico",
+   "type": "História",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-19",
+   "dueDate": "2027-11-30",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028",
+    "roadshow"
+   ],
+   "parentKey": "DEMO-148",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-186"
+  },
+  {
+   "key": "DEMO-187",
+   "summary": "[Atlas Web 2028] F2 · Realizar roadshow interno — semana 1: liderança e time técnico",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-06",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028",
+    "roadshow"
+   ],
+   "parentKey": "DEMO-151",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-187"
+  },
+  {
+   "key": "DEMO-188",
+   "summary": "[Nimbus OS 2028] F3 · Go/no-go e war room dos primeiros dias",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-10-10",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-147",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-188"
+  },
+  {
+   "key": "DEMO-189",
+   "summary": "[Console 2028] F1 · Confeccionar vídeos curtos por tarefa",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-11-27",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-154",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-189"
+  },
+  {
+   "key": "DEMO-191",
+   "summary": "[Nimbus OS 2028] F3 · Plano de comunicação por balde (T-90 a D+7)",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-10-12",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-147",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-191"
+  },
+  {
+   "key": "DEMO-192",
+   "summary": "[Console 2028] F2 · Realizar roadshow interno — semana 1: liderança e time técnico",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-07",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028",
+    "roadshow"
+   ],
+   "parentKey": "DEMO-154",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-192"
+  },
+  {
+   "key": "DEMO-194",
+   "summary": "[Forge 2028] F2 · Realizar roadshow interno — semana 2: vendas, canais, CS e suporte",
+   "type": "História",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-19",
+   "dueDate": "2027-11-30",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028",
+    "roadshow"
+   ],
+   "parentKey": "DEMO-148",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-194"
+  },
+  {
+   "key": "DEMO-195",
+   "summary": "[Atlas Web 2028] F2 · Realizar roadshow interno — semana 2: vendas, canais, CS e suporte",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-14",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028",
+    "roadshow"
+   ],
+   "parentKey": "DEMO-151",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-195"
+  },
+  {
+   "key": "DEMO-196",
+   "summary": "[Forge 2028] F2 · Atualizar runbook de suporte, FAQ e macros de atendimento",
+   "type": "Tarefa",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-02",
+   "dueDate": "2027-11-19",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-148",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-196"
+  },
+  {
+   "key": "DEMO-197",
+   "summary": "[Atlas Web 2028] F2 · Atualizar runbook de suporte, FAQ e macros de atendimento",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-14",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-151",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-197"
+  },
+  {
+   "key": "DEMO-198",
+   "summary": "[Nimbus OS 2028] F3 · Rollout em anéis com feature flag e kill switch",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-11-06",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-147",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-198"
+  },
+  {
+   "key": "DEMO-199",
+   "summary": "[Nimbus OS 2028] F4 · Painel de adoção da versão",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-10-22",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-147",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-199"
+  },
+  {
+   "key": "DEMO-200",
+   "summary": "[Console 2028] F2 · Realizar roadshow interno — semana 2: vendas, canais, CS e suporte",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-14",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028",
+    "roadshow"
+   ],
+   "parentKey": "DEMO-154",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-200"
+  },
+  {
+   "key": "DEMO-201",
+   "summary": "[Forge 2028] F3 · Realizar war rooms dos primeiros dias",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-29",
+   "dueDate": "2027-12-10",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-148",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-201"
+  },
+  {
+   "key": "DEMO-202",
+   "summary": "[Atlas Web 2028] F3 · Realizar war rooms dos primeiros dias",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-19",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-151",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-202"
+  },
+  {
+   "key": "DEMO-204",
+   "summary": "[Console 2028] F2 · Atualizar runbook de suporte, FAQ e macros de atendimento",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-14",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-154",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-204"
+  },
+  {
+   "key": "DEMO-206",
+   "summary": "[Forge 2028] F3 · Definir plano de comunicação por priorização (T-90 a D+7)",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-29",
+   "dueDate": "2027-12-19",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-148",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-206"
+  },
+  {
+   "key": "DEMO-207",
+   "summary": "[Atlas Web 2028] F3 · Definir plano de comunicação por priorização (T-90 a D+7)",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-21",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-151",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-207"
+  },
+  {
+   "key": "DEMO-208",
+   "summary": "[Nimbus OS 2028] F4 · Retrospectiva e desligamento da versão anterior",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-11-20",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-147",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-208"
+  },
+  {
+   "key": "DEMO-209",
+   "summary": "[Console 2028] F3 · Realizar war rooms dos primeiros dias",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-19",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-154",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-209"
+  },
+  {
+   "key": "DEMO-210",
+   "summary": "[Console 2028] F3 · Definir plano de comunicação por priorização (T-90 a D+7)",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-24",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-154",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-210"
+  },
+  {
+   "key": "DEMO-211",
+   "summary": "[Forge 2028] F3 · Realizar rollout em ondas com feature flag e kill switch",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-11-09",
+   "dueDate": "2028-01-14",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-148",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-211"
+  },
+  {
+   "key": "DEMO-212",
+   "summary": "[Atlas Web 2028] F3 · Realizar rollout em ondas com feature flag e kill switch",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2028-01-14",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-151",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-212"
+  },
+  {
+   "key": "DEMO-214",
+   "summary": "[Forge 2028] F4 · Acompanhar painel de adoção da versão",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-11-09",
+   "dueDate": "2028-01-14",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-148",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-214"
+  },
+  {
+   "key": "DEMO-215",
+   "summary": "[Atlas Web 2028] F4 · Acompanhar painel de adoção da versão",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-31",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-151",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-215"
+  },
+  {
+   "key": "DEMO-217",
+   "summary": "[Console 2028] F3 · Realizar rollout em ondas com feature flag e kill switch",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2028-01-14",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-154",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-217"
+  },
+  {
+   "key": "DEMO-218",
+   "summary": "[Forge 2028] F4 · Finalizar retrospectiva e desligamento da versão anterior",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-12-04",
+   "dueDate": "2028-01-29",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-148",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-218"
+  },
+  {
+   "key": "DEMO-219",
+   "summary": "[Atlas Web 2028] F4 · Finalizar retrospectiva e desligamento da versão anterior",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2028-01-29",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-151",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-219"
+  },
+  {
+   "key": "DEMO-220",
+   "summary": "[Console 2028] F4 · Acompanhar painel de adoção da versão",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-31",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-154",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-220"
+  },
+  {
+   "key": "DEMO-223",
+   "summary": "[Console 2028] F4 · Finalizar retrospectiva e desligamento da versão anterior",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2028-01-29",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-154",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-223"
+  },
+  {
+   "key": "DEMO-227",
+   "summary": "Lançamento QuickSite 2029",
+   "type": "Épico",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Carla Mendes",
+   "assigneeEmail": "carla.mendes@exemplo.com.br",
+   "startDate": "2027-09-17",
+   "dueDate": "2028-01-29",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2029"
+   ],
+   "parentKey": null,
+   "url": "https://exemplo.atlassian.net/browse/DEMO-227"
+  },
+  {
+   "key": "DEMO-228",
+   "summary": "[QuickSite 2029] F0 · Tese da versão e messaging house",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-11-16",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2029"
+   ],
+   "parentKey": "DEMO-227",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-228"
+  },
+  {
+   "key": "DEMO-229",
+   "summary": "[QuickSite 2029] F0 · Segmentar a base instalada por impacto",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-11-16",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2029"
+   ],
+   "parentKey": "DEMO-227",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-229"
+  },
+  {
+   "key": "DEMO-230",
+   "summary": "[QuickSite 2029] F0 · Breaking changes e política de depreciação da N-1",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-11-16",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2029"
+   ],
+   "parentKey": "DEMO-227",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-230"
+  },
+  {
+   "key": "DEMO-231",
+   "summary": "[QuickSite 2029] F0 · Plano de migração por balde",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-11-16",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2029"
+   ],
+   "parentKey": "DEMO-227",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-231"
+  },
+  {
+   "key": "DEMO-232",
+   "summary": "[QuickSite 2029] F1 · Atualizar Kit de habilitação comercial",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-11-27",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2029"
+   ],
+   "parentKey": "DEMO-227",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-232"
+  },
+  {
+   "key": "DEMO-233",
+   "summary": "[QuickSite 2029] F1 · Atualizar documentação, release notes e guia de migração",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-11-27",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2029"
+   ],
+   "parentKey": "DEMO-227",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-233"
+  },
+  {
+   "key": "DEMO-234",
+   "summary": "[QuickSite 2029] F1 · Confeccionar vídeos curtos por tarefa",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-11-27",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2029"
+   ],
+   "parentKey": "DEMO-227",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-234"
+  },
+  {
+   "key": "DEMO-235",
+   "summary": "[QuickSite 2029] F2 · Realizar roadshow interno — semana 1: liderança e time técnico",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-06",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2029",
+    "roadshow"
+   ],
+   "parentKey": "DEMO-227",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-235"
+  },
+  {
+   "key": "DEMO-236",
+   "summary": "[QuickSite 2029] F2 · Realizar roadshow interno — semana 2: vendas, canais, CS e suporte",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-13",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2029",
+    "roadshow"
+   ],
+   "parentKey": "DEMO-227",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-236"
+  },
+  {
+   "key": "DEMO-237",
+   "summary": "[QuickSite 2029] F2 · Atualizar runbook de suporte, FAQ e macros de atendimento",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-13",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2029"
+   ],
+   "parentKey": "DEMO-227",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-237"
+  },
+  {
+   "key": "DEMO-238",
+   "summary": "[QuickSite 2029] F3 · Realizar war rooms dos primeiros dias",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-19",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2029"
+   ],
+   "parentKey": "DEMO-227",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-238"
+  },
+  {
+   "key": "DEMO-239",
+   "summary": "[QuickSite 2029] F3 · Definir plano de comunicação por priorização (T-90 a D+7)",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-21",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2029"
+   ],
+   "parentKey": "DEMO-227",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-239"
+  },
+  {
+   "key": "DEMO-240",
+   "summary": "[QuickSite 2029] F3 · Realizar rollout em ondas com feature flag e kill switch",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2028-01-14",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2029"
+   ],
+   "parentKey": "DEMO-227",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-240"
+  },
+  {
+   "key": "DEMO-241",
+   "summary": "[QuickSite 2029] F4 · Acompanhar painel de adoção da versão",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2027-12-27",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2029"
+   ],
+   "parentKey": "DEMO-227",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-241"
+  },
+  {
+   "key": "DEMO-242",
+   "summary": "[QuickSite 2029] F4 · Finalizar retrospectiva e desligamento da versão anterior",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": null,
+   "dueDate": "2028-01-29",
+   "created": "2027-09-12",
+   "labels": [
+    "lancamento-2029"
+   ],
+   "parentKey": "DEMO-227",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-242"
+  },
+  {
+   "key": "DEMO-245",
+   "summary": "[Nimbus Astra 2028 · Pocket] F1 · Criar tese de uma página",
+   "type": "História",
+   "status": "Concluído",
+   "statusCategory": "done",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-09-10",
+   "dueDate": "2027-09-16",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-245"
+  },
+  {
+   "key": "DEMO-246",
+   "summary": "[Nimbus Astra 2028 · Pocket] F1 · Listar 5 clientes e conversas com o ICP — Portão 1",
+   "type": "Tarefa",
+   "status": "Concluído",
+   "statusCategory": "done",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-09-10",
+   "dueDate": "2027-09-16",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-246"
+  },
+  {
+   "key": "DEMO-247",
+   "summary": "[Nimbus Astra 2028 · Pocket] F1 · Aprovar mensagem e valor",
+   "type": "Tarefa",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-08",
+   "dueDate": "2027-10-14",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-247"
+  },
+  {
+   "key": "DEMO-248",
+   "summary": "[Nimbus Astra 2028 · Pocket] F1 · Definir pricing",
+   "type": "Tarefa",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-08",
+   "dueDate": "2027-10-14",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-248"
+  },
+  {
+   "key": "DEMO-249",
+   "summary": "[Nimbus Astra 2028 · Pocket] F1 · Definir meta numérica do lançamento",
+   "type": "Tarefa",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-08",
+   "dueDate": "2027-10-14",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-249"
+  },
+  {
+   "key": "DEMO-250",
+   "summary": "[Nimbus Astra 2028 · Pocket] F1 · Elencar 5 maiores riscos e seus responsáveis",
+   "type": "Tarefa",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-08",
+   "dueDate": "2027-10-14",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-250"
+  },
+  {
+   "key": "DEMO-251",
+   "summary": "[Nimbus Astra 2028 · Pocket] F2 · Confeccionar Sales kit",
+   "type": "História",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-15",
+   "dueDate": "2027-10-21",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-251"
+  },
+  {
+   "key": "DEMO-252",
+   "summary": "[Nimbus Astra 2028 · Pocket] F2 · Cadastrar proposta, tabela de preços e pacotes",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-15",
+   "dueDate": "2027-10-21",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-252"
+  },
+  {
+   "key": "DEMO-253",
+   "summary": "[Nimbus Astra 2028 · Pocket] F2 · Atualizar contrato Master",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-15",
+   "dueDate": "2027-10-21",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-253"
+  },
+  {
+   "key": "DEMO-254",
+   "summary": "[Nimbus Astra 2028 · Pocket] F2 · Confeccionar dez objeções com respostas prontas",
+   "type": "Tarefa",
+   "status": "Concluído",
+   "statusCategory": "done",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-15",
+   "dueDate": "2027-10-21",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-254"
+  },
+  {
+   "key": "DEMO-255",
+   "summary": "[Nimbus Astra 2028 · Pocket] F2 · Confeccionar screenshots em alta resolução e template de slide",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-15",
+   "dueDate": "2027-10-21",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-255"
+  },
+  {
+   "key": "DEMO-256",
+   "summary": "[Nimbus Astra 2028 · Pocket] F2 · Testar emissão nota fiscal emitida de ponta a ponta",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Alta",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-15",
+   "dueDate": "2027-10-21",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-256"
+  },
+  {
+   "key": "DEMO-257",
+   "summary": "[Nimbus Astra 2028 · Pocket] F3 · Realizar programa de primeiros clientes",
+   "type": "História",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-22",
+   "dueDate": "2027-10-27",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-257"
+  },
+  {
+   "key": "DEMO-258",
+   "summary": "[Nimbus Astra 2028 · Pocket] F3 · Configurar ambientes para clientes",
+   "type": "Tarefa",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-22",
+   "dueDate": "2027-10-27",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-258"
+  },
+  {
+   "key": "DEMO-259",
+   "summary": "[Nimbus Astra 2028 · Pocket] F3 · Instrumentar dois eventos no produto: ativação e valor",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-22",
+   "dueDate": "2027-10-27",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-259"
+  },
+  {
+   "key": "DEMO-260",
+   "summary": "[Nimbus Astra 2028 · Pocket] F3 · Definir canal direto de suporte",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-22",
+   "dueDate": "2027-10-27",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-260"
+  },
+  {
+   "key": "DEMO-261",
+   "summary": "[Nimbus Astra 2028 · Pocket] F3 · Atualizar regras sobre LGPD, retenção, segregação, backup, rollback e página de dados",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Alta",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-22",
+   "dueDate": "2027-10-27",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-261"
+  },
+  {
+   "key": "DEMO-262",
+   "summary": "[Nimbus Astra 2028 · Pocket] F4 · Confeccionar página de venda, com preço visível",
+   "type": "História",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-30",
+   "dueDate": "2027-11-07",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-262"
+  },
+  {
+   "key": "DEMO-263",
+   "summary": "[Nimbus Astra 2028 · Pocket] F4 · Realizar evento de Lançamento",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-30",
+   "dueDate": "2027-11-07",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-263"
+  },
+  {
+   "key": "DEMO-264",
+   "summary": "[Nimbus Astra 2028 · Pocket] F4 · Publicar case de cliente",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-30",
+   "dueDate": "2027-11-07",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-264"
+  },
+  {
+   "key": "DEMO-265",
+   "summary": "[Nimbus Astra 2028 · Pocket] F4 · Realizar comunicação interna no dia do lançamento",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-24",
+   "dueDate": "2027-11-01",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-265"
+  },
+  {
+   "key": "DEMO-266",
+   "summary": "[Nimbus Astra 2028 · Pocket] F4 · Comunicar em redes e e-mail para a base",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-11-07",
+   "dueDate": "2027-11-15",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-266"
+  },
+  {
+   "key": "DEMO-267",
+   "summary": "[Nimbus Astra 2028 · Pocket] F4 · Estruturar plantão após o lançamento",
+   "type": "Tarefa",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-11-07",
+   "dueDate": "2027-11-15",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-267"
+  },
+  {
+   "key": "DEMO-268",
+   "summary": "[Nimbus Astra 2028 · Pocket] F4 · Realizar balanço do D30: ampliar, ajustar ou encerrar",
+   "type": "História",
+   "status": "Backlog",
+   "statusCategory": "new",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-12-02",
+   "dueDate": "2027-12-10",
+   "created": "2027-09-12",
+   "labels": [
+    "gtm-pocket",
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-268"
+  },
+  {
+   "key": "DEMO-269",
+   "summary": "Criação e Revisão da Documentação do Atlas V3",
+   "type": "História",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Alta",
+   "assignee": "Elisa Prado",
+   "assigneeEmail": "elisa.prado@exemplo.com.br",
+   "startDate": "2027-09-18",
+   "dueDate": "2028-01-07",
+   "created": "2027-09-17",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-131",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-269"
+  },
+  {
+   "key": "DEMO-274",
+   "summary": "[Nimbus Astra 2028 · Pocket]  F1 · Confeccionar documentação, release notes e guia de migração",
+   "type": "Tarefa",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-11",
+   "dueDate": "2027-11-01",
+   "created": "2027-09-24",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-274"
+  },
+  {
+   "key": "DEMO-275",
+   "summary": "[Nimbus Astra 2028 · Pocket]  F2 · Realizar roadshow interno — semana 1: liderança e time técnico",
+   "type": "História",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-14",
+   "dueDate": "2027-10-24",
+   "created": "2027-09-24",
+   "labels": [
+    "lancamento-2028",
+    "roadshow"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-275"
+  },
+  {
+   "key": "DEMO-276",
+   "summary": "[Nimbus Astra 2028 · Pocket]  F2 · Realizar roadshow interno — semana 2: vendas, canais, CS e suporte",
+   "type": "História",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-18",
+   "dueDate": "2027-10-28",
+   "created": "2027-09-24",
+   "labels": [
+    "lancamento-2028",
+    "roadshow"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-276"
+  },
+  {
+   "key": "DEMO-277",
+   "summary": "[Nimbus Astra 2028 · Pocket]  F2 · Confeccionar documentação de suporte, FAQ e macros de atendimento",
+   "type": "Tarefa",
+   "status": "Em Progresso",
+   "statusCategory": "indeterminate",
+   "priority": "Baixa",
+   "assignee": "Ana Lima",
+   "assigneeEmail": "ana.lima@exemplo.com.br",
+   "startDate": "2027-10-13",
+   "dueDate": "2027-11-01",
+   "created": "2027-09-24",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-160",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-277"
+  },
+  {
+   "key": "DEMO-295",
+   "summary": "Disparo do E-mail Nimbus Labs",
+   "type": "História",
+   "status": "On Hold",
+   "statusCategory": "indeterminate",
+   "priority": "Alta",
+   "assignee": "Elisa Prado",
+   "assigneeEmail": "elisa.prado@exemplo.com.br",
+   "startDate": null,
+   "dueDate": null,
+   "created": "2027-10-01",
+   "labels": [
+    "lancamento-2028"
+   ],
+   "parentKey": "DEMO-131",
+   "url": "https://exemplo.atlassian.net/browse/DEMO-295"
+  }
+ ]
+}
