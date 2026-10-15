@@ -1,2 +1,6 @@
-vendor/deck/scripts/
-vendor/deck/assets/
+# Relativo a esta pasta: um .gitignore aninhado não enxerga o caminho completo.
+# Escrito como "vendor/deck/scripts/", o padrão virava "vendor/deck/vendor/deck/
+# scripts/" e não casava com nada — o Master da marca entraria no repositório
+# público no primeiro `git add -A`.
+scripts/
+assets/
