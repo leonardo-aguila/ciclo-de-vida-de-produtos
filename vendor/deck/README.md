@@ -4,8 +4,8 @@ A rota `/api/produtos/[id]/status-pptx` monta o conteúdo do slide (o spec JSON)
 e delega o desenho a um gerador externo, para o deck sair no padrão visual da
 sua empresa em vez de numa imitação dele.
 
-**Este diretório vem vazio de propósito.** O template e o gerador da Nimbus são
-material interno e não são distribuídos aqui.
+**Este diretório vem vazio de propósito.** O template e o gerador da sua
+empresa são material interno e não acompanham este repositório.
 
 Para habilitar a exportação, coloque neste diretório:
 
