@@ -23,8 +23,11 @@ import {
 import * as schema from "../schema";
 import { ENUM_SEEDS } from "./enums";
 import { seedPackages } from "./packages";
+import { refuseInProduction } from "../guard";
 
 config({ path: ".env.local" });
+
+refuseInProduction("db:seed");
 
 const url = process.env.MIGRATION_DATABASE_URL ?? process.env.DATABASE_URL;
 if (!url) throw new Error("MIGRATION_DATABASE_URL ou DATABASE_URL não definida.");

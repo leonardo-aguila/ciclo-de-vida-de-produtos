@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   addDaysToIso,
+  isoDateInAppTimezone,
+  todayIso,
   addMonthsToCompetence,
   businessDaysBetween,
   competenceRange,
@@ -128,5 +130,23 @@ describe("dias úteis", () => {
   it("atravessa o mês e o ano", () => {
     // 31/12/2026 é quinta; 04/01/2027 é segunda.
     expect(businessDaysBetween("2026-12-31", "2027-01-04")).toBe(2);
+  });
+});
+
+describe("hoje no fuso da aplicação", () => {
+  it("não depende do fuso do processo", () => {
+    // 23h30 em São Paulo é 02h30 UTC do dia seguinte. Se "hoje" viesse do
+    // host, um container em UTC marcaria como vencida uma entrega que vence
+    // hoje, três horas antes da hora.
+    expect(isoDateInAppTimezone(new Date("2026-10-16T02:30:00Z"))).toBe("2026-10-15");
+  });
+
+  it("vira o dia na meia-noite de São Paulo, não na de UTC", () => {
+    expect(isoDateInAppTimezone(new Date("2026-10-16T02:59:59Z"))).toBe("2026-10-15");
+    expect(isoDateInAppTimezone(new Date("2026-10-16T03:00:00Z"))).toBe("2026-10-16");
+  });
+
+  it("todayIso devolve uma data ISO", () => {
+    expect(todayIso()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 });

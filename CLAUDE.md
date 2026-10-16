@@ -46,7 +46,11 @@ npm run db:packages:jira  # deriva os pacotes "Novo Produto" e "Nova Release" do
 npm run db:seed:example   # um produto fictício com dados completos, para o painel ter o que mostrar
 npm run setup:pptx    # venv com python-pptx, exigida pela exportação de status em PowerPoint
 npm run db:reset      # derruba o schema, migra e semeia de novo (destrutivo)
+```
 
+Os quatro comandos que escrevem dado fictício ou apagam dado real — `db:seed`, `db:seed:jira`, `db:seed:example` e `db:reset` — recusam rodar com `NODE_ENV=production` (`db/guard.ts`). Os dois primeiros são os mais perigosos justamente por não parecerem: um cria usuários com senha conhecida, o outro limpa os produtos antes de importar. Um ambiente publicado precisa de um seed próprio, que grave só configuração e o administrador real.
+
+```bash
 npm run dev           # sobe o banco se preciso e roda o Next em desenvolvimento
 npm run build         # build de produção
 npm run typecheck
@@ -67,6 +71,10 @@ npm run test:all
 **Autorização** é verificada no servidor, em toda server action e todo route handler, via `src/lib/auth/guard.ts`. Esconder o botão na UI é consequência, nunca a defesa.
 
 **Auditoria** é append-only e garantida pelo banco: o papel `portfolio_app` só tem `INSERT` e `SELECT` em `audit_logs` e `access_logs` (`scripts/grant-app.sql`, reaplicado a cada `db:migrate`). Se uma tabela nova precisar de escrita pela aplicação, o grant entra nesse arquivo.
+
+A aplicação dos grants (`db/grants.ts`) **confere o estado final e falha alto**, porque aplicar o SQL não prova que ele fez efeito: `GRANT` e `REVOKE` emitidos por quem não tem direito sobre a tabela não dão erro, o Postgres emite um aviso e segue. Rodar os grants com a URL da própria aplicação, em vez da do dono, terminava com "grants aplicados" na tela e nada aplicado no banco — e a garantia inteira sumia sem sintoma. `tests/integration/audit-append-only.test.ts` prova o par contra um banco de verdade: o papel escreve no log, **não** consegue alterá-lo, e continua escrevendo normalmente numa tabela comum. Sem essa segunda metade, um papel sem acesso nenhum passaria por "append-only".
+
+**Saúde é duas rotas, não uma.** `/api/saude` responde sem tocar no banco e `/api/saude/pronto` faz um `select 1`. A separação não é cerimônia: a primeira é a que um orquestrador usa para decidir **reiniciar** o processo, e reiniciar a aplicação não conserta um banco fora do ar — junte as duas e uma oscilação do Postgres vira uma sucessão de reinícios que derruba quem ainda conseguiria navegar. As duas estão em `PUBLIC_PATHS` no middleware, porque quem chama é o healthcheck e ele não tem sessão.
 
 **Nada de tela branca.** Toda rota tem estado de carregamento, de erro e de vazio — e o estado vazio diz o que fazer, não só que não há dados (`src/components/ui/states.tsx`).
 
@@ -105,6 +113,8 @@ Cada uma destas custou tempo; estão aqui para não custarem de novo.
 **Contraste de cor de status é requisito, não enfeite.** Verde e âmbar vivos reprovam em texto pequeno sobre branco (3,77:1 e 2,94:1). A paleta de `globals.css` e as cores de fase em `labels.ts` estão todas em 3:1 ou melhor — quando a informação está na cor, quem não enxerga a cor não recebe a informação.
 
 **`npm run build` com o `npm run dev` no ar corrompe o `.next`.** Os dois escrevem no mesmo diretório: o dev server passa a responder 500 com `Cannot find module './NNN.js'`, e o build falha em `Failed to collect page data`. Pare o dev server, `rm -rf .next` e rode de novo.
+
+**O dia de hoje é do produto, não do host.** `todayIso()` formata no fuso `America/Sao_Paulo`, fixo em `format.ts`, e não em `new Date().getDate()`. Num container, que sobe em UTC, às 21h de São Paulo já é o dia seguinte: `classify` passaria a marcar como **vencida** uma entrega que vence hoje, três horas antes da hora, e o mesmo deslocamento contaminaria os rótulos D, a contagem de dias úteis e a competência. O fuso é constante e não vem do ambiente de propósito — `todayIso` roda no servidor e em oito componentes de cliente, e uma variável que só existe de um lado faria os dois calcularem dias diferentes e quebraria a hidratação.
 
 **A contagem D é em dias úteis, e o D0 é uma tarefa.** "Faltam 3 dias" tem de querer dizer três dias de trabalho; num fim de semana a diferença entre dias úteis e corridos é a diferença entre chegar e não chegar. E o D0 sai da entrega que é o lançamento (`findLaunchTask`), não da data cadastrada no produto: o plano gira em torno do dia em que a coisa sobe, e esse dia é um card que alguém move no quadro. Feriados não entram — a aplicação não tem calendário deles, e inventar um nacional para uma empresa em vários estados erraria em silêncio. A nota de rodapé do slide diz isso.
 

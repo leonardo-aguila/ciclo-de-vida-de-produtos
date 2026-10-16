@@ -1,7 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 const COOKIE = process.env.SESSION_COOKIE_NAME ?? "portfolio_session";
-const PUBLIC_PATHS = ["/entrar", "/api/sair"];
+// /api/saude entra aqui porque quem chama é o healthcheck, que não tem
+// sessão: sem isto ele receberia o redirecionamento para /entrar e leria 307
+// como "de pé", que é a resposta errada pelo motivo errado.
+const PUBLIC_PATHS = ["/entrar", "/api/sair", "/api/saude"];
 
 /**
  * Cheap gate: it only looks at whether a session cookie exists, because the

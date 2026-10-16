@@ -11,8 +11,11 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "../schema";
 import { seedExampleProduct } from "./example";
+import { refuseInProduction } from "../guard";
 
 config({ path: ".env.local" });
+
+refuseInProduction("db:seed:example");
 
 async function main() {
   const url = process.env.MIGRATION_DATABASE_URL ?? process.env.DATABASE_URL;

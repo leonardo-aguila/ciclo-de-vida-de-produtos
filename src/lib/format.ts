@@ -183,8 +183,40 @@ export function toIsoDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+/**
+ * O fuso em que a aplicação decide que dia é hoje.
+ *
+ * Fixo de propósito, e não lido do ambiente: `todayIso` roda no servidor e
+ * também em oito componentes de cliente, e os dois lados têm de concordar —
+ * uma variável que só existe no servidor faria o navegador calcular um "hoje"
+ * diferente e quebrar a hidratação.
+ */
+const APP_TIMEZONE = "America/Sao_Paulo";
+
+/** "YYYY-MM-DD" — en-CA é o locale que já formata nessa ordem. */
+const TODAY_FORMAT = new Intl.DateTimeFormat("en-CA", {
+  timeZone: APP_TIMEZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/**
+ * Hoje, no fuso da aplicação — não no fuso de quem está rodando o processo.
+ *
+ * `new Date()` lido com `getDate()` devolve o dia do servidor. Num container,
+ * que sobe em UTC, às 21h de São Paulo já é o dia seguinte: `classify` passa
+ * a marcar como **vencida** uma entrega que vence hoje, três horas antes da
+ * hora — e o mesmo deslocamento contamina os rótulos D, a contagem de dias
+ * úteis e a competência. O dia da aplicação é uma decisão do produto, não uma
+ * configuração do host.
+ */
+export function isoDateInAppTimezone(date: Date): string {
+  return TODAY_FORMAT.format(date);
+}
+
 export function todayIso(): string {
-  return toIsoDate(new Date());
+  return isoDateInAppTimezone(new Date());
 }
 
 /** "2024-03-17" -> "2024-03-01": the competence a date belongs to. */

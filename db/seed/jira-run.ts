@@ -14,8 +14,11 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "../schema";
 import { importJiraRoadmap } from "./jira";
+import { refuseInProduction } from "../guard";
 
 config({ path: ".env.local" });
+
+refuseInProduction("db:seed:jira");
 
 /** Seeded demo logins. The admin stays; these go with the demo data. */
 const DEMO_LOGINS = ["marina", "rafael", "camila", "paulo"];

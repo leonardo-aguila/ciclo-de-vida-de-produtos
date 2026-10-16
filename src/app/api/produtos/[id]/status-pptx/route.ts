@@ -28,8 +28,18 @@ export const dynamic = "force-dynamic";
 
 const run = promisify(execFile);
 
-const VENDOR = join(process.cwd(), "vendor", "deck");
-const PYTHON = join(process.cwd(), ".venv-pptx", "bin", "python");
+/**
+ * Onde estão o gerador e o Python que o roda.
+ *
+ * Resolvidos a partir do `cwd` por padrão, que é o que vale rodando o projeto
+ * direto. Com `output: "standalone"` o servidor passa a rodar de
+ * `.next/standalone` e o `cwd` deixa de ser a raiz — e `vendor/` e
+ * `.venv-pptx/` não são rastreados pelo bundler, então não vão junto. As duas
+ * variáveis existem para esse caso: o material da marca fica fora da imagem,
+ * montado como volume, e o caminho é dito explicitamente.
+ */
+const VENDOR = process.env.DECK_VENDOR_DIR ?? join(process.cwd(), "vendor", "deck");
+const PYTHON = process.env.DECK_PYTHON ?? join(process.cwd(), ".venv-pptx", "bin", "python");
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

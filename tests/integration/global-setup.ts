@@ -3,6 +3,7 @@ import { config } from "dotenv";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
+import { applyGrants } from "../../db/grants";
 
 config({ path: ".env.local" });
 
@@ -16,4 +17,9 @@ export default async function setup() {
   } finally {
     await client.end();
   }
+
+  // Os grants também vão para o banco de teste: é o que permite provar, contra
+  // um banco de verdade, que audit_logs continua append-only. Sem isto o teste
+  // passaria por nunca ter havido restrição nenhuma.
+  await applyGrants(url);
 }
