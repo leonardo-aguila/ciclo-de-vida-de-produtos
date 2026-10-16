@@ -42,7 +42,7 @@ describe("componente de meta", () => {
     // usuário para três telas diferentes.
     expect(goalComponent(100, null).detail).toMatch(/sem meta principal/i);
     expect(goalComponent(null, 100, "new_mrr").detail).toMatch(/ainda não há histórico/i);
-    expect(goalComponent(null, 100, "nps").detail).toMatch(/não coleta dados/i);
+    expect(goalComponent(null, 100, "nps").detail).toMatch(/apurada à mão/i);
     expect(goalComponent(100, 0).raw).toBeNull();
     expect(goalComponent(100, 0).detail).toMatch(/alvo zero/i);
   });

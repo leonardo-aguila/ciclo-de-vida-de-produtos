@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { MonthlyPoint } from "@/lib/engine/finance";
-import { goalWindow, realizedForGoal, type SaleForGoal } from "@/lib/engine/goals";
+import {
+  goalWindow,
+  MEASURABLE_GOAL_TYPES,
+  realizedForGoal,
+  realizedFromMeasurements,
+  type SaleForGoal,
+} from "@/lib/engine/goals";
 
 const sale = (newMrr: number, recurringRevenue = 0, activeCustomers = 0): SaleForGoal => ({
   newMrr,
@@ -66,6 +72,61 @@ describe("realização de meta", () => {
   it("devolve nulo para os tipos que o sistema não coleta", () => {
     for (const code of ["nps", "market_share", "adoption", ""]) {
       expect(realizedForGoal(code, [], [sale(5_000)], "monthly")).toBeNull();
+    }
+  });
+});
+
+describe("apuração manual", () => {
+  const nps = (competence: string, value: number) => ({ competence, value });
+
+  it("usa a apuração mais recente, não a última inserida", () => {
+    const out = realizedFromMeasurements(
+      [nps("2026-08-01", 30), nps("2026-10-01", 42), nps("2026-09-01", 35)],
+      "monthly",
+      "2026-10-16",
+    );
+    expect(out).toEqual({ value: 42, competence: "2026-10-01" });
+  });
+
+  it("não soma: NPS é nível, não fluxo", () => {
+    const out = realizedFromMeasurements(
+      [nps("2026-08-01", 30), nps("2026-09-01", 35), nps("2026-10-01", 42)],
+      "quarterly",
+      "2026-10-16",
+    );
+    expect(out?.value).toBe(42);
+  });
+
+  it("descarta a apuração vencida para o período da meta", () => {
+    // Meta mensal aceita até um mês atrás; esta tem três.
+    expect(realizedFromMeasurements([nps("2026-07-01", 42)], "monthly", "2026-10-16")).toBeNull();
+    // A mesma apuração serve para uma meta anual.
+    expect(realizedFromMeasurements([nps("2026-07-01", 42)], "annual", "2026-10-16")).toEqual({
+      value: 42,
+      competence: "2026-07-01",
+    });
+  });
+
+  it("aceita a apuração na borda da janela", () => {
+    expect(realizedFromMeasurements([nps("2026-09-01", 42)], "monthly", "2026-10-16")?.value).toBe(42);
+    expect(realizedFromMeasurements([nps("2026-08-01", 42)], "monthly", "2026-10-16")).toBeNull();
+  });
+
+  it("aceita apuração de um mês que ainda não fechou", () => {
+    expect(realizedFromMeasurements([nps("2026-11-01", 42)], "monthly", "2026-10-16")?.value).toBe(42);
+  });
+
+  it("sem apuração nenhuma devolve null, não zero", () => {
+    expect(realizedFromMeasurements([], "monthly", "2026-10-16")).toBeNull();
+  });
+
+  it("não se aplica aos tipos que a aplicação já deriva", () => {
+    // O par: o que está aqui não tem apuração manual, e vice-versa.
+    for (const code of ["new_mrr", "arr", "one_time_revenue", "customers", "cost_reduction"]) {
+      expect(MEASURABLE_GOAL_TYPES.has(code)).toBe(true);
+    }
+    for (const code of ["nps", "market_share", "adoption"]) {
+      expect(MEASURABLE_GOAL_TYPES.has(code)).toBe(false);
     }
   });
 });

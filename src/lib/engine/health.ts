@@ -81,9 +81,11 @@ export function goalComponent(
   }
   if (realized === null) {
     if (typeCode !== undefined && !MEASURABLE_GOAL_TYPES.has(typeCode)) {
+      // A aplicação não deriva este tipo, então quem apura é a pessoa — e a
+      // tela tem de dizer onde, não só que não deu.
       return {
         raw: null,
-        detail: "O sistema não coleta dados para medir uma meta desse tipo.",
+        detail: "A meta desse tipo é apurada à mão e ainda não tem apuração válida.",
       };
     }
     return {

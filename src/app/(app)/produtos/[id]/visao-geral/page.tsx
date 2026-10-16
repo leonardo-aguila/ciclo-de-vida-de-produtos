@@ -6,8 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/states";
 import { requireUser } from "@/lib/auth/guard";
-import { canRegisterDecision } from "@/lib/auth/policy";
-import { formatCurrency, formatDate, formatDays, formatNumber, formatPercent } from "@/lib/format";
+import { canEditProduct, canRegisterDecision } from "@/lib/auth/policy";
+import {
+  formatCompetence,
+  formatCurrency,
+  formatDate,
+  formatDays,
+  formatNumber,
+  formatPercent,
+} from "@/lib/format";
 import { GOAL_PERIOD_LABELS, PHASE_LABELS } from "@/lib/labels";
 import { listEnumValues } from "@/lib/queries/enums";
 import { getProductMetrics } from "@/lib/queries/metrics";
@@ -16,6 +23,7 @@ import { getProduct } from "@/lib/queries/products";
 import { getSettings } from "@/lib/queries/settings";
 import { getHealthDelta } from "@/lib/snapshots";
 import { ContinuityCard } from "./continuity-card";
+import { GoalMeasurements } from "./goal-measurements";
 import { EvolutionCard } from "./evolution-card";
 import { HealthCard } from "./health-card";
 import { IndicatorTile, phaseIndicators } from "./indicators";
@@ -28,6 +36,8 @@ export default async function OverviewPage({ params }: { params: Promise<{ id: s
 
   const product = await getProduct(id);
   if (!product) notFound();
+
+  const canEdit = canEditProduct(user, product);
 
   const [metrics, settings, decisions, phaseAverages, columns] = await Promise.all([
     getProductMetrics(id),
@@ -196,7 +206,10 @@ export default async function OverviewPage({ params }: { params: Promise<{ id: s
       {/* Metas e governança. */}
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader title="Metas" description="A principal alimenta o painel executivo." />
+          <CardHeader
+            title="Metas"
+            description="A principal alimenta o painel executivo. Metas automáticas saem das vendas mensais e dos lançamentos; as demais são apuradas aqui."
+          />
           <CardBody>
             {metrics.goals.length === 0 ? (
               <EmptyState
@@ -212,8 +225,9 @@ export default async function OverviewPage({ params }: { params: Promise<{ id: s
                       <th scope="col" className="num">Alvo</th>
                       <th scope="col" className="num">Realizado</th>
                       <th scope="col" className="num">Atingimento</th>
-                      <th scope="col">Apuração</th>
+                      <th scope="col">Período</th>
                       <th scope="col">Data-limite</th>
+                      <th scope="col" className="sr-only">Apurações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -239,9 +253,26 @@ export default async function OverviewPage({ params }: { params: Promise<{ id: s
                           <td className="num">{format(goal.target)}</td>
                           <td className="num">
                             {goal.realized === null ? (
-                              <span className="text-fg-muted">não medível</span>
+                              // Três ausências diferentes: o tipo é apurado à
+                              // mão e ninguém apurou, a apuração venceu, ou o
+                              // produto ainda não tem histórico. Mandar as
+                              // três para "não medível" escondia o que fazer.
+                              <span className="text-fg-muted">
+                                {goal.manual
+                                  ? goal.measurements.length === 0
+                                    ? "sem apuração"
+                                    : "apuração vencida"
+                                  : "sem histórico"}
+                              </span>
                             ) : (
-                              format(goal.realized)
+                              <span>
+                                {format(goal.realized)}
+                                {goal.measuredAt ? (
+                                  <span className="block text-[11px] font-normal text-fg-muted">
+                                    apurado em {formatCompetence(goal.measuredAt)}
+                                  </span>
+                                ) : null}
+                              </span>
                             )}
                           </td>
                           <td className="num">
@@ -263,6 +294,21 @@ export default async function OverviewPage({ params }: { params: Promise<{ id: s
                           </td>
                           <td>{GOAL_PERIOD_LABELS[goal.period]}</td>
                           <td>{formatDate(goal.deadline)}</td>
+                          <td>
+                            {goal.manual ? (
+                              <GoalMeasurements
+                                goalId={goal.id}
+                                goalLabel={goal.typeLabel}
+                                unit={goal.unit}
+                                measurements={goal.measurements}
+                                canEdit={canEdit}
+                              />
+                            ) : (
+                              <span className="text-[11px] text-fg-muted">
+                                automático
+                              </span>
+                            )}
+                          </td>
                         </tr>
                       );
                     })}

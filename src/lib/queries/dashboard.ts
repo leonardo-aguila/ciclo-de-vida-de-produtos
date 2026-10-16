@@ -32,7 +32,11 @@ import {
   summarize,
   type MonthlyPoint,
 } from "@/lib/engine/finance";
-import { realizedForGoal } from "@/lib/engine/goals";
+import {
+  MEASURABLE_GOAL_TYPES,
+  realizedForGoal,
+  realizedFromMeasurements,
+} from "@/lib/engine/goals";
 import { computeHealth } from "@/lib/engine/health";
 import { projectRoi } from "@/lib/engine/projection";
 import { recommend } from "@/lib/engine/recommendation";
@@ -40,6 +44,7 @@ import { accumulatedDeviation, comparePlan, milestoneProgress } from "@/lib/engi
 import { countLateTasks, expectedProgress, overallProgress } from "@/lib/engine/schedule";
 import { daysBetween, toCompetence, todayIso } from "@/lib/format";
 import { listFinanceEntriesFor, listMonthlySalesFor } from "./finance";
+import { listGoalMeasurements } from "./products";
 import { listTasksFor } from "./tasks";
 import { getSettings } from "./settings";
 
@@ -173,6 +178,7 @@ export async function getPortfolioOverview(
       listTasksFor(ids),
       db
         .select({
+          id: productGoals.id,
           productId: productGoals.productId,
           targetValue: productGoals.targetValue,
           period: productGoals.period,
@@ -226,6 +232,10 @@ export async function getPortfolioOverview(
         .where(inArray(productPhaseHistory.productId, ids)),
     ]);
 
+  // As apurações manuais das metas principais, numa consulta só para os
+  // produtos do recorte — uma por produto seria N+1 no painel.
+  const measurements = await listGoalMeasurements(ids);
+
   const currentCompetence = toCompetence(today);
   const phaseDays = new Map<LifecyclePhase, number[]>();
   for (const entry of history) {
@@ -262,11 +272,18 @@ export async function getPortfolioOverview(
     const projection = projectRoi(series, settings.projectionSettings);
 
     const goal = goals.find((row) => row.productId === product.id) ?? null;
-    // Same function the product page uses — see engine/goals.ts for why this
-    // is not written inline here.
-    const goalRealized = goal
-      ? realizedForGoal(goal.code ?? "", series, productSales, goal.period)
-      : null;
+    // Same functions the product page uses — see engine/goals.ts for why this
+    // is not written inline here. A escolha da fonte é a mesma dos dois lados:
+    // tipo derivado lê a série, o resto lê a apuração digitada.
+    const goalRealized = !goal
+      ? null
+      : MEASURABLE_GOAL_TYPES.has(goal.code ?? "")
+        ? realizedForGoal(goal.code ?? "", series, productSales, goal.period)
+        : (realizedFromMeasurements(
+            measurements.filter((row) => row.goalId === goal.id),
+            goal.period,
+            today,
+          )?.value ?? null);
 
     const plan = plans.find((row) => row.productId === product.id) ?? null;
     const planRows = plan

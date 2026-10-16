@@ -71,3 +71,57 @@ export const MEASURABLE_GOAL_TYPES = new Set([
   "customers",
   "cost_reduction",
 ]);
+
+/* -------------------------------------------------------------------------- */
+/* Apuração manual                                                            */
+/* -------------------------------------------------------------------------- */
+
+export type GoalMeasurement = {
+  /** Primeiro dia do mês apurado, "YYYY-MM-01". */
+  competence: string;
+  value: number;
+};
+
+export type MeasuredGoal = { value: number; competence: string };
+
+/** Meses entre duas competências "YYYY-MM-01". Negativo se `to` vier antes. */
+function monthsBetweenCompetences(from: string, to: string): number {
+  const [fy, fm] = [Number(from.slice(0, 4)), Number(from.slice(5, 7))];
+  const [ty, tm] = [Number(to.slice(0, 4)), Number(to.slice(5, 7))];
+  return (ty - fy) * 12 + (tm - fm);
+}
+
+/**
+ * O realizado de uma meta que ninguém consegue derivar: a última apuração
+ * digitada, desde que ela ainda valha.
+ *
+ * "Ainda valer" é o mesmo recorte que as metas derivadas usam — a janela do
+ * período. Uma meta mensal aceita uma apuração de até um mês atrás, uma
+ * trimestral de até três, uma anual de até doze. Fora disso devolve null, e a
+ * tela diz que a apuração venceu em vez de exibir um NPS do ano passado como
+ * se fosse o de agora. Um número velho apresentado como atual é pior do que
+ * número nenhum: o número nenhum ninguém usa para decidir.
+ *
+ * Não se soma: NPS, market share e adoção são níveis, não fluxos, e somar
+ * três meses de NPS não quer dizer nada. Tipo que soma é tipo derivado, e
+ * esse não passa por aqui.
+ */
+export function realizedFromMeasurements(
+  measurements: GoalMeasurement[],
+  period: GoalPeriod,
+  today: string,
+): MeasuredGoal | null {
+  if (measurements.length === 0) return null;
+
+  const latest = measurements.reduce((newest, current) =>
+    current.competence > newest.competence ? current : newest,
+  );
+
+  const currentCompetence = `${today.slice(0, 7)}-01`;
+  const age = monthsBetweenCompetences(latest.competence, currentCompetence);
+  // Apuração do futuro não é erro de digitação a corrigir aqui — é um mês
+  // que ainda não fechou, e vale.
+  if (age > goalWindow(period)) return null;
+
+  return { value: latest.value, competence: latest.competence };
+}

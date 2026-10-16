@@ -31,7 +31,12 @@ import {
   revenueStability,
   type MonthlyPoint,
 } from "@/lib/engine/finance";
-import { realizedForGoal } from "@/lib/engine/goals";
+import {
+  type GoalMeasurement,
+  MEASURABLE_GOAL_TYPES,
+  realizedForGoal,
+  realizedFromMeasurements,
+} from "@/lib/engine/goals";
 import { projectRoi, type Projection } from "@/lib/engine/projection";
 import { computeHealth, type HealthResult } from "@/lib/engine/health";
 import { recommend, type Recommendation } from "@/lib/engine/recommendation";
@@ -53,7 +58,7 @@ import {
 } from "@/lib/engine/schedule";
 import { daysBetween, toCompetence as toCompetenceOf, todayIso } from "@/lib/format";
 import { listFinanceEntries, listMonthlySales } from "./finance";
-import { getPhaseHistory, getProductGoals } from "./products";
+import { getPhaseHistory, getProductGoals, listGoalMeasurements } from "./products";
 import { listTasks, type TaskRow } from "./tasks";
 import { getSettings } from "./settings";
 
@@ -65,10 +70,16 @@ export type GoalProgress = {
   unit: string | null;
   period: "monthly" | "quarterly" | "annual";
   deadline: string | null;
-  /** null when the goal type has no data source in the system yet. */
+  /** null quando não há como medir: sem histórico, ou sem apuração válida. */
   realized: number | null;
   attainmentPct: number | null;
   reached: boolean | null;
+  /** O tipo não é derivado pela aplicação: o realizado vem de apuração manual. */
+  manual: boolean;
+  /** A competência da apuração usada, quando o realizado veio de uma. */
+  measuredAt: string | null;
+  /** As apurações manuais da meta, da mais antiga para a mais recente. */
+  measurements: { id: string; competence: string; value: number; note: string | null }[];
 };
 
 export type PhaseDuration = { phase: LifecyclePhase; days: number; current: boolean };
@@ -153,8 +164,18 @@ function toGoalProgress(
   },
   series: MonthlyPoint[],
   sales: MonthlySale[],
+  measurements: (GoalMeasurement & { id: string; note: string | null })[],
+  today: string,
 ): GoalProgress {
-  const realized = realizedForGoal(goal.goalTypeCode ?? "", series, sales, goal.period);
+  const typeCode = goal.goalTypeCode ?? "";
+  // Um tipo só tem uma fonte. Derivado lê a série; o resto lê a apuração
+  // digitada. Aceitar as duas criaria dois realizados para a mesma meta, e a
+  // tela teria de escolher um sem ter como justificar a escolha.
+  const manual = !MEASURABLE_GOAL_TYPES.has(typeCode);
+  const measured = manual ? realizedFromMeasurements(measurements, goal.period, today) : null;
+  const realized = manual
+    ? (measured?.value ?? null)
+    : realizedForGoal(typeCode, series, sales, goal.period);
   const attainmentPct =
     realized === null || goal.targetValue <= 0 ? null : (realized / goal.targetValue) * 100;
 
@@ -169,6 +190,14 @@ function toGoalProgress(
     realized,
     attainmentPct,
     reached: attainmentPct === null ? null : attainmentPct >= 100,
+    manual,
+    measuredAt: measured?.competence ?? null,
+    measurements: measurements.map((row) => ({
+      id: row.id,
+      competence: row.competence,
+      value: row.value,
+      note: row.note,
+    })),
   };
 }
 
@@ -217,7 +246,16 @@ export async function getProductMetrics(productId: string): Promise<ProductMetri
   const payback = computePayback(series, settings.projectionSettings.windowMonths);
   const projection = projectRoi(series, settings.projectionSettings);
 
-  const goalProgress = goals.map((goal) => toGoalProgress(goal, series, sales));
+  const measurements = await listGoalMeasurements([productId]);
+  const goalProgress = goals.map((goal) =>
+    toGoalProgress(
+      goal,
+      series,
+      sales,
+      measurements.filter((row) => row.goalId === goal.id),
+      today,
+    ),
+  );
   const primaryGoal =
     goalProgress.find((goal) => goals.find((g) => g.id === goal.id)?.isPrimary) ?? null;
 

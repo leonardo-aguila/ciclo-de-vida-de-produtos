@@ -2,6 +2,7 @@ import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@db";
 import {
   enumValues,
+  goalMeasurements,
   productGoals,
   productPhaseHistory,
   products,
@@ -104,6 +105,29 @@ export async function getProductGoals(productId: string) {
     .leftJoin(enumValues, eq(enumValues.id, productGoals.goalTypeId))
     .where(eq(productGoals.productId, productId))
     .orderBy(desc(productGoals.isPrimary), asc(productGoals.createdAt));
+}
+
+/**
+ * As apurações manuais de todas as metas de um produto, da mais antiga para a
+ * mais recente.
+ *
+ * Numa consulta só, em vez de uma por meta: um produto tem poucas metas, mas
+ * o painel executivo lê vários produtos de uma vez e N+1 ali custa caro.
+ */
+export async function listGoalMeasurements(productIds: string[]) {
+  if (productIds.length === 0) return [];
+  return db
+    .select({
+      id: goalMeasurements.id,
+      goalId: goalMeasurements.goalId,
+      competence: goalMeasurements.competence,
+      value: goalMeasurements.value,
+      note: goalMeasurements.note,
+    })
+    .from(goalMeasurements)
+    .innerJoin(productGoals, eq(productGoals.id, goalMeasurements.goalId))
+    .where(inArray(productGoals.productId, productIds))
+    .orderBy(asc(goalMeasurements.competence));
 }
 
 export async function getPrimaryGoal(productId: string) {

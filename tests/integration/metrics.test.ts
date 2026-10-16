@@ -151,7 +151,7 @@ describe("métricas do produto", () => {
     expect(metrics.health.components.find((c) => c.key === "goal")!.raw).toBe(75);
   });
 
-  it("diz que a meta não é medível quando o tipo não tem fonte de dado", async () => {
+  it("manda apurar à mão a meta cujo tipo a aplicação não deriva", async () => {
     const product = await seedProduct();
     const [goalType] = await db
       .insert(enumValues)
@@ -171,11 +171,13 @@ describe("métricas do produto", () => {
     expect(metrics.primaryGoal!.realized).toBeNull();
     const goalComponent = metrics.health.components.find((c) => c.key === "goal")!;
     expect(goalComponent.raw).toBeNull();
-    // A meta existe e está cadastrada; o que falta é fonte de dado para o
-    // tipo dela (NPS). Dizer "sem meta principal" mandaria o usuário
-    // cadastrar de novo uma meta que já está lá.
-    expect(goalComponent.detail).toMatch(/não coleta dados/i);
+    // A meta existe e está cadastrada; o que falta é a apuração, que neste
+    // tipo (NPS) é manual. Dizer "sem meta principal" mandaria o usuário
+    // cadastrar de novo uma meta que já está lá, e "sem histórico" o mandaria
+    // para o Financeiro, que não é onde se apura NPS.
+    expect(goalComponent.detail).toMatch(/apurada à mão/i);
     expect(goalComponent.detail).not.toMatch(/sem meta principal/i);
+    expect(metrics.primaryGoal!.manual).toBe(true);
   });
 
   it("conta plano de ação vencido como risco em aberto", async () => {

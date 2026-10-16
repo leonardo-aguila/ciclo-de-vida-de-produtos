@@ -334,6 +334,40 @@ export const productGoals = pgTable(
   ],
 );
 
+/**
+ * A apuração manual de uma meta, uma por competência.
+ *
+ * Existe para os tipos de meta que a aplicação não sabe derivar sozinha. Novo
+ * MRR, ARR, receita única, nº de clientes e redução de custo saem das vendas
+ * mensais e dos lançamentos — para esses, digitar o realizado seria criar uma
+ * segunda fonte que contradiz a primeira. NPS, market share, adoção e
+ * qualquer tipo que o administrador cadastre depois não têm de onde sair, e
+ * até aqui ficavam para sempre em "não medido": a meta podia ser criada e
+ * nunca apurada.
+ *
+ * Uma linha por mês, e não um campo "realizado" na meta, porque a pergunta
+ * que importa é a série — se o NPS subiu ou caiu — e um campo único só
+ * guardaria a última resposta, apagando a anterior sem deixar rastro.
+ */
+export const goalMeasurements = pgTable(
+  "goal_measurements",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    goalId: uuid("goal_id")
+      .notNull()
+      .references(() => productGoals.id, { onDelete: "cascade" }),
+    competence: date("competence", { mode: "string" }).notNull(),
+    value: numeric("value", { precision: 14, scale: 2, mode: "number" }).notNull(),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("goal_measurements_competence").on(t.goalId, t.competence),
+    index("goal_measurements_goal_idx").on(t.goalId, t.competence),
+  ],
+);
+
 /** The user's decision on a recommendation, with the numbers that supported it. */
 export const productDecisions = pgTable(
   "product_decisions",
@@ -767,9 +801,17 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   snapshots: many(healthSnapshots),
 }));
 
-export const productGoalsRelations = relations(productGoals, ({ one }) => ({
+export const productGoalsRelations = relations(productGoals, ({ one, many }) => ({
   product: one(products, { fields: [productGoals.productId], references: [products.id] }),
   goalType: one(enumValues, { fields: [productGoals.goalTypeId], references: [enumValues.id] }),
+  measurements: many(goalMeasurements),
+}));
+
+export const goalMeasurementsRelations = relations(goalMeasurements, ({ one }) => ({
+  goal: one(productGoals, {
+    fields: [goalMeasurements.goalId],
+    references: [productGoals.id],
+  }),
 }));
 
 export const tasksRelations = relations(tasks, ({ one, many }) => ({
